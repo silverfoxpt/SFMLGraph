@@ -4,7 +4,12 @@
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(640, 480), "SFML project");
+
     Graph newGraph(&window);
+    newGraph.CreateAxis(1.0);
+    newGraph.CreatePoint(20, 20, 3);
+    newGraph.CreatePoint(0, 0, 3);
+    newGraph.CreatePoint(-20, -20, 3);
 
     while (window.isOpen())
     {
@@ -16,11 +21,9 @@ int main()
         }
 
         window.clear();
-        //DrawAxis(window);
+        
         newGraph.DrawAxis();
-        newGraph.PlotPoint(20, 20, 3);
-        newGraph.PlotPoint(0, 0, 3);
-        newGraph.PlotPoint(-20, -20, 3);
+        newGraph.DrawPoint();
 
         window.display();
     }
