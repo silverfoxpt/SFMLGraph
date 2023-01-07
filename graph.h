@@ -8,7 +8,7 @@ class Graph {
     public:
         Graph(sf::RenderWindow *window);
 
-        void CreateLine(float startX, float startY, float endX, float endY, float lineThickness);
+        sf::RectangleShape CreateLine(float startX, float startY, float endX, float endY, float lineThickness);
         void CreateAxis(float axisThickness);
         void DrawAxis();
 
@@ -19,6 +19,13 @@ class Graph {
         std::pair<float, float> ConvertCoordsToScreen(float x, float y);     
         std::pair<float, float> ConvertCoordsToDescartes(float x, float y);
 
+        void DrawGraph();
+        void CreateGraph();
+        float CalculateGraph(float x);
+
+        void SetPixelEquivalent(float eqi);
+        void SetSpacing(float spacing);
+
     private:
         float windowWidth;
         float windowHeight;
@@ -27,6 +34,10 @@ class Graph {
 
         std::vector<sf::CircleShape> points;
         std::vector<sf::RectangleShape> axes;
+        std::vector<sf::RectangleShape> graphLine;
+
+        float spacing;
+        float pixelEquivalent; //1 unit = ? pixel
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <math.h>
+#include <vector>
 #include <iostream>
 #include "graph.h"
 
@@ -29,7 +30,7 @@ Graph::Graph(sf::RenderWindow *window) {
 }
 
 #pragma region line
-void Graph::CreateLine(float startX, float startY, float endX, float endY, float lineThickness) {
+sf::RectangleShape Graph::CreateLine(float startX, float startY, float endX, float endY, float lineThickness) {
     int width = dist(startX, startY, endX, endY);
     std::pair<float, float> toScreen = this->ConvertCoordsToScreen(startX, startY);
 
@@ -40,18 +41,17 @@ void Graph::CreateLine(float startX, float startY, float endX, float endY, float
     //rotation
     int x1 = endX - startX, y1 = endY - startY;
     float angle = angleBetweenTwoVector(x1, y1, 1, 0);
-    line.setRotation(angle);
+    line.setRotation((endY < startY) ? angle : 360-angle);
 
-    this->axes.push_back(line);
-
+    return line;
 }
 
 void Graph::CreateAxis(float axisThickness) {
     float halfWidth = this->windowWidth/2.0;
     float halfHeight = this->windowHeight/2.0;
 
-    this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness);
-    this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness);
+    this->axes.push_back(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness));
+    this->axes.push_back(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness));
 }
 
 void Graph::DrawAxis() {
@@ -105,5 +105,51 @@ void Graph::DrawPoint() {
 
 void Graph::ClearAllPoints() {
     this->points.clear();
+}
+#pragma endregion
+
+#pragma region graph
+void Graph::SetPixelEquivalent(float eqi) {
+    this->pixelEquivalent = eqi;
+}
+
+void Graph::SetSpacing(float spacing) {
+    this->spacing = spacing;
+}
+
+void Graph::CreateGraph() {
+    float x = -this->windowWidth/2.0;
+    std::vector<std::pair<float, float>> po;
+
+    while(x <= this->windowWidth/2.0) {
+        float plotX = x * this->pixelEquivalent;
+        float plotY = this->CalculateGraph(x) * this->pixelEquivalent;
+        //CreatePoint(plotX, plotY, 2);
+
+        std::pair<float, float> newPoint(plotX, plotY);
+        po.push_back(newPoint);
+
+        x += this->spacing;
+    }
+
+    //create lines
+    int n = po.size();
+    for (int i = 0; i < n-1; i++) {
+        int x1 = po[i].first, y1 = po[i].second;
+        int x2 = po[i+1].first, y2 = po[i+1].second;
+
+        sf::RectangleShape newLineConnection = CreateLine(x1, y1, x2, y2, 1.0);
+        this->graphLine.push_back(newLineConnection);
+    }
+}
+
+void Graph::DrawGraph() {
+    for (auto line: this->graphLine) {
+        this->myWindow->draw(line);
+    }
+}
+
+float Graph::CalculateGraph(float x) {
+    return std::tan(x);
 }
 #pragma endregion

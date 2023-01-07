@@ -1,15 +1,28 @@
 #include <SFML/Graphics.hpp>
+#include <iostream>
 #include "graph.h"
+#include "RPN.h"
+#include <vector>
+#include <string>
+
+void test() {
+    std::cout << "YES" << '\n';
+    std::vector<std::string> a = RPN::infixToRPN("(3+7/7-2/5)*(9+6/(3-7))", 15);
+    for (int i = 0; i < a.size(); i++) {
+        std::cout << a[i] << " ";
+    }
+}
 
 int main()
 {
+    test();
     sf::RenderWindow window(sf::VideoMode(640, 480), "SFML project");
 
     Graph newGraph(&window);
     newGraph.CreateAxis(1.0);
-    newGraph.CreatePoint(20, 20, 3);
-    newGraph.CreatePoint(0, 0, 3);
-    newGraph.CreatePoint(-20, -20, 3);
+    newGraph.SetPixelEquivalent(30); //1 unit = ? pixel
+    newGraph.SetSpacing(0.02);
+    newGraph.CreateGraph();
 
     while (window.isOpen())
     {
@@ -23,6 +36,7 @@ int main()
         window.clear();
         
         newGraph.DrawAxis();
+        newGraph.DrawGraph();
         newGraph.DrawPoint();
 
         window.display();
