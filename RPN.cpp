@@ -1,16 +1,16 @@
 #include "RPN.h"
 
-std::vector<std::string> RPN::infixToRPN(std::string inp, int xVal)  {
-    std::string alpha = "qwertyuiopasdfghjklzxcvbnm";
-    std::string num = "1234567890";
-    std::map<char, int> precedence = {
-        {'^',3},
-        {'*',2},
-        {'/',2},
-        {'+',1},
-        {'-',1},
-    };
+std::map<char, int> RPN::precedence = {
+    {'^',3},
+    {'*',2},
+    {'/',2},
+    {'+',1},
+    {'-',1},
+};
+std::string RPN::alpha = "qwertyuiopasdfghjklzxcvbnm";
+std::string RPN::num = "1234567890.";
 
+std::vector<std::string> RPN::infixToRPN(std::string inp, int xVal)  {
     std::string xPress = std::to_string(xVal);
 
     //conversion
@@ -85,4 +85,57 @@ std::vector<std::string> RPN::infixToRPN(std::string inp, int xVal)  {
         RPN.push_back(std::string(1, operators.top())); operators.pop();
     }
     return RPN;
+}
+
+float RPN::RPNToValue(std::vector<std::string> &rp) {
+    std::stack<float> val;
+    for (const std::string &x: rp) {
+        if (num.find(x[0]) != std::string::npos) { //is a number
+            val.push(std::stof(x));
+        } 
+        
+        else { //operator
+            switch(x[0]) {
+                case '+': {
+                    float x = val.top(); val.pop();
+                    float y = val.top(); val.pop();
+                    val.push(y+x);
+                    break;
+                }
+
+                case '-': {
+                    float x = val.top(); val.pop();
+                    float y = val.top(); val.pop();
+                    val.push(y-x);
+                    break;
+                }
+
+                case '*': {
+                    float x = val.top(); val.pop();
+                    float y = val.top(); val.pop();
+                    val.push(y*x);
+                    break;
+                }
+
+                case '/': {
+                    float x = val.top(); val.pop();
+                    float y = val.top(); val.pop();
+                    val.push(y/x);
+                    break;
+                }
+
+                case '^': {
+                    float x = val.top(); val.pop();
+                    float y = val.top(); val.pop();
+                    val.push(pow(y, x));
+                    break;
+                }
+
+                default: {
+                    std::cout << "Unknown" << '\n'; break;
+                }
+            }
+        }
+    }
+    return val.top();
 }

@@ -6,16 +6,20 @@
 #include <string>
 
 void test() {
-    std::cout << "YES" << '\n';
+    //test 1
     std::vector<std::string> a = RPN::infixToRPN("(3+7/7-2/5)*(9+6/(3-7))", 15);
     for (int i = 0; i < a.size(); i++) {
         std::cout << a[i] << " ";
     }
+    std::cout << '\n';
+
+    //test 2;
+    std::cout << RPN::RPNToValue(a);
 }
 
 int main()
 {
-    test();
+    //test();
     sf::RenderWindow window(sf::VideoMode(640, 480), "SFML project");
 
     Graph newGraph(&window);
