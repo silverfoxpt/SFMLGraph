@@ -1,9 +1,13 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include "graph.h"
-#include "RPN.h"
 #include <vector>
 #include <string>
+
+#include "graph.h"
+#include "RPN.h"
+#include "IMGui Stuffs/imgui.h"
+#include "IMGui Stuffs/imgui-SFML.h"
+
 
 void test() {
     //test 1
@@ -19,7 +23,7 @@ void test() {
 
 int main()
 {
-    //test();
+    /*//test();
     sf::RenderWindow window(sf::VideoMode(1080, 840), "SFML project");
 
     Graph newGraph(&window);
@@ -45,7 +49,39 @@ int main()
         newGraph.DrawPoint();
 
         window.display();
+    }*/
+
+    sf::RenderWindow window(sf::VideoMode(640, 480), "ImGui + SFML = <3");
+    window.setFramerateLimit(60);
+    ImGui::SFML::Init(window);
+
+    sf::CircleShape shape(100.f);
+    shape.setFillColor(sf::Color::Green);
+
+    sf::Clock deltaClock;
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            ImGui::SFML::ProcessEvent(window, event);
+
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+        }
+
+        ImGui::SFML::Update(window, deltaClock.restart());
+
+        ImGui::Begin("Hello, world!");
+        ImGui::Button("Look at this pretty button");
+        ImGui::End();
+
+        window.clear();
+        window.draw(shape);
+        ImGui::SFML::Render(window);
+        window.display();
     }
+
+    ImGui::SFML::Shutdown();
 
     return 0;
 }
