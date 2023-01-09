@@ -1,7 +1,3 @@
-#include <SFML/Graphics.hpp>
-#include <math.h>
-#include <vector>
-#include <iostream>
 #include "graph.h"
 
 #pragma region mathStuff
@@ -30,13 +26,14 @@ Graph::Graph(sf::RenderWindow *window) {
 }
 
 #pragma region line
-sf::RectangleShape Graph::CreateLine(float startX, float startY, float endX, float endY, float lineThickness) {
+sf::RectangleShape Graph::CreateLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col = sf::Color::White) {
     int width = dist(startX, startY, endX, endY);
     std::pair<float, float> toScreen = this->ConvertCoordsToScreen(startX, startY);
 
     sf::RectangleShape line(sf::Vector2f(width, lineThickness));
     line.setOrigin(sf::Vector2f(0, lineThickness/2.0));
     line.setPosition(sf::Vector2f(toScreen.first, toScreen.second));
+    line.setFillColor(col);
 
     //rotation
     int x1 = endX - startX, y1 = endY - startY;
@@ -50,13 +47,13 @@ void Graph::CreateAxis(float axisThickness) {
     float halfWidth = this->windowWidth/2.0;
     float halfHeight = this->windowHeight/2.0;
 
-    this->axes.push_back(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness));
-    this->axes.push_back(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness));
+    this->axes.push_back(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness, sf::Color::Red));
+    this->axes.push_back(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness, sf::Color::Red));
 }
 
 void Graph::DrawAxis() {
     for (auto line: this->axes) {
-        this->myWindow->draw(line);
+        this->myWindow->draw(line);std::vector<std::string> rpn = RPN::infixToRPN(expression);
     }
 }
 #pragma endregion
@@ -150,6 +147,11 @@ void Graph::DrawGraph() {
 }
 
 float Graph::CalculateGraph(float x) {
-    return std::tan(x);
+    return RPN::RPNToValue(this->myRPN, x);
+}
+
+void Graph::SetExpression(std::string ex) {
+    this->expression = ex;
+    this->myRPN = RPN::infixToRPN(ex);
 }
 #pragma endregion

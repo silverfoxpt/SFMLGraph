@@ -2,13 +2,17 @@
 #define GRAPH_H
 
 #include <SFML/Graphics.hpp>
+#include <math.h>
 #include <vector>
+#include <iostream>
+
+#include "RPN.h"
 
 class Graph {
     public:
         Graph(sf::RenderWindow *window);
 
-        sf::RectangleShape CreateLine(float startX, float startY, float endX, float endY, float lineThickness);
+        sf::RectangleShape CreateLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col);
         void CreateAxis(float axisThickness);
         void DrawAxis();
 
@@ -26,6 +30,8 @@ class Graph {
         void SetPixelEquivalent(float eqi);
         void SetSpacing(float spacing);
 
+        void SetExpression(std::string ex);
+
     private:
         float windowWidth;
         float windowHeight;
@@ -38,6 +44,9 @@ class Graph {
 
         float spacing;
         float pixelEquivalent; //1 unit = ? pixel
+
+        std::string expression;
+        std::vector<std::string> myRPN;
 };
 
 #endif

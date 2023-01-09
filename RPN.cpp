@@ -1,17 +1,61 @@
 #include "RPN.h"
 
+std::string ReplaceString(std::string subject, const std::string& search,
+                          const std::string& replace) {
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos) {
+         subject.replace(pos, search.length(), replace);
+         pos += replace.length();
+    }
+    return subject;
+}
+
 std::map<char, int> RPN::precedence = {
     {'^',3},
     {'*',2},
     {'/',2},
     {'+',1},
     {'-',1},
+
+    {'!', 4},
+    {'@', 4},
+    {'#', 4},
+    {'$', 4},
+
+    {'|', 4},
+
+    {'%', 4},
+    {'&', 4},
+
+    {'{', 4},
+    {'}', 4},
+    {'[', 4},
+    {']', 4},
 };
 std::string RPN::alpha = "qwertyuiopasdfghjklzxcvbnm";
 std::string RPN::num = "1234567890.";
+std::map<std::string, char> RPN::opConvert = {
+    {"sin", '!'},
+    {"cos", '@'},
+    {"tan", '#'},
+    {"cot", '$'},
 
-std::vector<std::string> RPN::infixToRPN(std::string inp, int xVal)  {
-    std::string xPress = std::to_string(xVal);
+    {"abs", '|'},
+
+    {"sqrt", '%'},
+    {"cbrt", '&'},
+
+    {"exp", '{'},
+    {"ln", '}'},
+    {"log10", '['},
+    {"log2", ']'},
+};
+
+std::vector<std::string> RPN::infixToRPN(std::string inp)  {
+    //replace uncommon functions
+    for (std::map<std::string, char>::iterator it = opConvert.begin(); it != opConvert.end(); it++) {
+        inp = ReplaceString(inp, it->first, std::string(1, it->second));
+    }
 
     //conversion
     std::vector<std::string> RPN;
@@ -22,7 +66,7 @@ std::vector<std::string> RPN::infixToRPN(std::string inp, int xVal)  {
     for (int i = 0; i < inp.size(); i++) {
         char c = inp[i];
         if (c == 'x') {
-            RPN.push_back(xPress);
+            RPN.push_back("x");
         } 
         
         //not an operator
@@ -87,10 +131,15 @@ std::vector<std::string> RPN::infixToRPN(std::string inp, int xVal)  {
     return RPN;
 }
 
-float RPN::RPNToValue(std::vector<std::string> &rp) {
+float RPN::RPNToValue(std::vector<std::string> &rp, float xVal) {
+    //evaluate
     std::stack<float> val;
     for (const std::string &x: rp) {
-        if (num.find(x[0]) != std::string::npos) { //is a number
+        if (x[0] == 'x') {
+            val.push(xVal);
+        }
+
+        else if (num.find(x[0]) != std::string::npos) { //is a number
             val.push(std::stof(x));
         } 
         
@@ -128,6 +177,76 @@ float RPN::RPNToValue(std::vector<std::string> &rp) {
                     float x = val.top(); val.pop();
                     float y = val.top(); val.pop();
                     val.push(pow(y, x));
+                    break;
+                }
+
+                //TRIG FUNCTIONS
+                case '!': {
+                    float x = val.top(); val.pop();
+                    val.push(std::sin(x));
+                    break;
+                }
+
+                case '@': {
+                    float x = val.top(); val.pop();
+                    val.push(std::cos(x));
+                    break;
+                }
+
+                case '#': {
+                    float x = val.top(); val.pop();
+                    val.push(std::tan(x));
+                    break;
+                }
+
+                case '$': {
+                    float x = val.top(); val.pop();
+                    val.push(1/std::tan(x));
+                    break;
+                }
+
+                //abs
+                case '|': {
+                    float x = val.top(); val.pop();
+                    val.push(std::abs(x));
+                    break;
+                }
+
+                //root
+                case '%': {
+                    float x = val.top(); val.pop();
+                    val.push(std::sqrt(x));
+                    break;
+                }
+
+                case '&': {
+                    float x = val.top(); val.pop();
+                    val.push(std::cbrt(x));
+                    break;
+                }
+
+                //log
+                case '{': {
+                    float x = val.top(); val.pop();
+                    val.push(std::exp(x));
+                    break;
+                }
+
+                case '}': {
+                    float x = val.top(); val.pop();
+                    val.push(std::log(x));
+                    break;
+                }
+
+                case '[': {
+                    float x = val.top(); val.pop();
+                    val.push(std::log10(x));
+                    break;
+                }
+
+                case ']': {
+                    float x = val.top(); val.pop();
+                    val.push(std::log2(x));
                     break;
                 }
 

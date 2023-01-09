@@ -10,11 +10,12 @@
 
 class RPN {
     public:
-        static std::vector<std::string> infixToRPN(std::string inp, int xVal);
-        static float RPNToValue(std::vector<std::string> &rpn);
+        static std::vector<std::string> infixToRPN(std::string inp);
+        static float RPNToValue(std::vector<std::string> &rpn, float xVal);
 
     private:
         static std::map<char, int> precedence;
+        static std::map<std::string, char> opConvert;
         static std::string alpha;
         static std::string num;
 };
