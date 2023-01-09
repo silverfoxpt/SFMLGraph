@@ -20,10 +20,10 @@ void test() {
 int main()
 {
     //test();
-    sf::RenderWindow window(sf::VideoMode(640, 640), "SFML project");
+    sf::RenderWindow window(sf::VideoMode(1080, 840), "SFML project");
 
     Graph newGraph(&window);
-    newGraph.SetExpression("tan(abs(tan(sin(x)*2)/2)+2)-1");
+    newGraph.SetExpression("tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
     newGraph.CreateAxis(1.0);
     newGraph.SetPixelEquivalent(20); //1 unit = ? pixel
     newGraph.SetSpacing(0.02);
