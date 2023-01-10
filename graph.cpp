@@ -1,5 +1,9 @@
 #include "graph.h"
 
+void Graph::Debug() {
+    //std::cout << this->graphLine.size() << '\n';
+}
+
 #pragma region mathStuff
 const float radToDeg = 57.295779513;
 
@@ -21,8 +25,12 @@ float angleBetweenTwoVector(float x1, float y1, float x2, float y2) {
 
 Graph::Graph(sf::RenderWindow *window) {
     this->myWindow = window;
+
     this->windowWidth = this->myWindow->getSize().x;
     this->windowHeight = this->myWindow->getSize().y;
+
+    this->myBuffer = new sf::RenderTexture();
+    this->myBuffer->create(this->windowWidth, this->windowHeight);
 }
 
 #pragma region line
@@ -47,14 +55,11 @@ void Graph::CreateAxis(float axisThickness) {
     float halfWidth = this->windowWidth/2.0;
     float halfHeight = this->windowHeight/2.0;
 
-    this->axes.push_back(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness, sf::Color::Red));
-    this->axes.push_back(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness, sf::Color::Red));
-}
+    //this->axes.push_back(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness, sf::Color::Red));
+    //this->axes.push_back(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness, sf::Color::Red));
 
-void Graph::DrawAxis() {
-    for (auto line: this->axes) {
-        this->myWindow->draw(line);std::vector<std::string> rpn = RPN::infixToRPN(expression);
-    }
+    this->myBuffer->draw(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness, sf::Color::Red));
+    this->myBuffer->draw(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness, sf::Color::Red));
 }
 #pragma endregion
 
@@ -91,17 +96,8 @@ void Graph::CreatePoint(float x, float y, float rad) {
     point.setFillColor(sf::Color::Red);
     point.setPosition(sf::Vector2f(coords.first, coords.second));
 
-    this->points.push_back(point);
-}
-
-void Graph::DrawPoint() {
-    for (auto &point: this->points) {
-        this->myWindow->draw(point);
-    }
-}
-
-void Graph::ClearAllPoints() {
-    this->points.clear();
+    //this->points.push_back(point);
+    this->myBuffer->draw(point);
 }
 #pragma endregion
 
@@ -136,14 +132,21 @@ void Graph::CreateGraph() {
         int x2 = po[i+1].first, y2 = po[i+1].second;
 
         sf::RectangleShape newLineConnection = CreateLine(x1, y1, x2, y2, 1.0);
-        this->graphLine.push_back(newLineConnection);
+        //this->graphLine.push_back(newLineConnection);
+        
+        this->myBuffer->draw(newLineConnection);
     }
+    this->myBuffer->display();
 }
 
 void Graph::DrawGraph() {
-    for (auto line: this->graphLine) {
+    /*for (const auto &line: this->graphLine) {
         this->myWindow->draw(line);
-    }
+    }*/
+    const sf::Texture& texture = this->myBuffer->getTexture();
+    sf::Sprite tmpSprite(texture);
+
+    this->myWindow->draw(tmpSprite);
 }
 
 float Graph::CalculateGraph(float x) {
@@ -153,5 +156,15 @@ float Graph::CalculateGraph(float x) {
 void Graph::SetExpression(std::string ex) {
     this->expression = ex;
     this->myRPN = RPN::infixToRPN(ex);
+}
+#pragma endregion
+
+#pragma region drawBuffer
+void Graph::ClearDrawBuffer() {
+    this->myBuffer->clear();
+}
+
+void Graph::DisplayDrawBuffer() {
+    this->myBuffer->display();
 }
 #pragma endregion

@@ -21,67 +21,51 @@ void test() {
     std::cout << RPN::RPNToValue(a, 1.0);
 }
 
-int main()
-{
-    /*//test();
-    sf::RenderWindow window(sf::VideoMode(1080, 840), "SFML project");
+void GraphManipulation(Graph &newGraph) {
+    newGraph.ClearDrawBuffer();
 
-    Graph newGraph(&window);
+    newGraph.SetPixelEquivalent(20); //1 unit = ? pixel
+    newGraph.SetSpacing(0.01);
+
     newGraph.SetExpression("tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
     newGraph.CreateAxis(1.0);
-    newGraph.SetPixelEquivalent(20); //1 unit = ? pixel
-    newGraph.SetSpacing(0.02);
     newGraph.CreateGraph();
 
+    newGraph.DisplayDrawBuffer();
+    newGraph.Debug();
+}
+
+int main()
+{
+    //test();
+    sf::RenderWindow window(sf::VideoMode(640, 480), "SFML project");
+    ImGui::SFML::Init(window);
+
+    Graph newGraph(&window);
+    GraphManipulation(newGraph);
+
+    sf::Clock deltaTime;
     while (window.isOpen())
     {
+        std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
+
         sf::Event event;
         while (window.pollEvent(event))
         {
+            ImGui::SFML::ProcessEvent(window, event);    
             if (event.type == sf::Event::Closed)
                 window.close();
         }
 
+        ImGui::SFML::Update(window, deltaTime.restart());
         window.clear();
-        
-        newGraph.DrawAxis();
+
         newGraph.DrawGraph();
-        newGraph.DrawPoint();
 
-        window.display();
-    }*/
-
-    sf::RenderWindow window(sf::VideoMode(640, 480), "ImGui + SFML = <3");
-    window.setFramerateLimit(60);
-    ImGui::SFML::Init(window);
-
-    sf::CircleShape shape(100.f);
-    shape.setFillColor(sf::Color::Green);
-
-    sf::Clock deltaClock;
-    while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            ImGui::SFML::ProcessEvent(window, event);
-
-            if (event.type == sf::Event::Closed) {
-                window.close();
-            }
-        }
-
-        ImGui::SFML::Update(window, deltaClock.restart());
-
-        ImGui::Begin("Hello, world!");
-        ImGui::Button("Look at this pretty button");
-        ImGui::End();
-
-        window.clear();
-        window.draw(shape);
         ImGui::SFML::Render(window);
         window.display();
     }
-
     ImGui::SFML::Shutdown();
-
+    
     return 0;
 }
