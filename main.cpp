@@ -60,6 +60,9 @@ int main()
         ImGui::SFML::Update(window, deltaTime.restart());
         window.clear();
 
+        ImGui::Begin("Debug");
+        ImGui::End();
+
         newGraph.DrawGraph();
 
         ImGui::SFML::Render(window);
