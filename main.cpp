@@ -30,6 +30,8 @@ void GraphManipulation(Graph &newGraph, std::string express) {
     newGraph.SetBackgroundColor(sf::Color(0, 0, 0, 0));
     newGraph.SetLineGraphColor(sf::Color::White);
 
+    newGraph.SetBufferPosition(50, 50);
+
     newGraph.ClearDrawBuffer();
 
     newGraph.SetExpression(express);
@@ -59,7 +61,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1080, 720), "SFML project");
     ImGui::SFML::Init(window);
 
-    Graph newGraph(640, 480, &window, 0.001, 0.999);
+    Graph newGraph(640, 480, &window, 0.5, 0.5);
     GraphManipulation(newGraph, "tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
 
     sf::Clock deltaTime;
@@ -67,7 +69,7 @@ int main()
 
     while (window.isOpen())
     {
-        //std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
+        std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
 
         sf::Event event;
         while (window.pollEvent(event))

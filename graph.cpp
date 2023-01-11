@@ -62,15 +62,32 @@ sf::RectangleShape Graph::CreateLine(float startX, float startY, float endX, flo
     return line;
 }
 
+void Graph::CreateSingleLine(float startX, float startY, float endX, float endY, sf::Color col) {
+    std::pair<float, float> p1 = this->ConvertCoordsToScreen(startX, startY);
+    std::pair<float, float> p2 = this->ConvertCoordsToScreen(endX, endY);
+
+    sf::Vertex line[] =
+    {
+        sf::Vertex(sf::Vector2f(p1.first, p1.second)),
+        sf::Vertex(sf::Vector2f(p2.first, p2.second))
+    };
+    line[0].color = line[1].color = col;
+
+    this->myBuffer->draw(line, 2, sf::Lines);
+}
+
 void Graph::CreateAxis(float axisThickness) {
-    float halfWidth = this->windowWidth/2.0;
-    float halfHeight = this->windowHeight/2.0;
+    //float halfWidth = this->windowWidth/2.0;
+    //float halfHeight = this->windowHeight/2.0;
 
     //this->axes.push_back(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness, sf::Color::Red));
     //this->axes.push_back(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness, sf::Color::Red));
 
-    this->myBuffer->draw(this->CreateLine(0, this->originY, 0, -(this->windowHeight - this->originY), axisThickness, sf::Color::Red));
-    this->myBuffer->draw(this->CreateLine(-this->originX, 0, this->windowWidth - this->originX, 0, axisThickness, sf::Color::Red));
+    //this->myBuffer->draw(this->CreateLine(0, this->originY, 0, -(this->windowHeight - this->originY), axisThickness, sf::Color::Red));
+    //this->myBuffer->draw(this->CreateLine(-this->originX, 0, this->windowWidth - this->originX, 0, axisThickness, sf::Color::Red));
+    
+    this->CreateSingleLine(0, this->originY, 0, -(this->windowHeight - this->originY), sf::Color::Red);
+    this->CreateSingleLine(this->originX, 0, this->windowWidth - this->originX, 0, sf::Color::Red);
 }
 
 void Graph::CreateMarker(float markerThickness) {
@@ -150,8 +167,10 @@ void Graph::CreateGraph() {
         int x1 = po[i].first, y1 = po[i].second;
         int x2 = po[i+1].first, y2 = po[i+1].second;
 
-        sf::RectangleShape newLineConnection = CreateLine(x1, y1, x2, y2, 1.0, this->lineColor);
-        this->myBuffer->draw(newLineConnection);
+        //sf::RectangleShape newLineConnection = CreateLine(x1, y1, x2, y2, 1.0, this->lineColor);
+        //this->myBuffer->draw(newLineConnection);
+
+        this->CreateSingleLine(x1, y1, x2, y2, this->lineColor);
     }
     this->myBuffer->display();
 }
@@ -162,6 +181,7 @@ void Graph::DrawGraph() {
     }*/
     const sf::Texture& texture = this->myBuffer->getTexture();
     sf::Sprite tmpSprite(texture);
+    tmpSprite.setPosition(this->bufferPos.first, this->bufferPos.second);
 
     this->myWindow->draw(tmpSprite);
 }
@@ -176,7 +196,7 @@ void Graph::SetExpression(std::string ex) {
 }
 #pragma endregion
 
-#pragma region drawBuffer
+#pragma region buffer
 void Graph::SetBackgroundColor(sf::Color col) {
     this->backgroundColor = col;
 }
@@ -191,5 +211,9 @@ void Graph::ClearDrawBuffer() {
 
 void Graph::DisplayDrawBuffer() {
     this->myBuffer->display();
+}
+
+void Graph::SetBufferPosition(float x, float y) {
+    this->bufferPos = std::pair<float, float>(x, y);
 }
 #pragma endregion

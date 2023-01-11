@@ -13,6 +13,7 @@ class Graph {
         Graph(int width, int height, sf::RenderWindow *myWindow, float originPercentWidth, float originPercentHeight);
 
         sf::RectangleShape CreateLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col);
+        void CreateSingleLine(float startX, float startY, float endX, float endY, sf::Color col);
         void CreateAxis(float axisThickness);
         void CreateMarker(float markerThickness);
 
@@ -33,6 +34,7 @@ class Graph {
 
         void ClearDrawBuffer();
         void DisplayDrawBuffer();
+        void SetBufferPosition(float x, float y);
 
         void SetBackgroundColor(sf::Color col);
         void SetLineGraphColor(sf::Color col);
@@ -57,6 +59,8 @@ class Graph {
 
         sf::Color backgroundColor;
         sf::Color lineColor;
+
+        std::pair<float, float> bufferPos;
 };
 
 #endif
