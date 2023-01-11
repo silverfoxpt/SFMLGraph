@@ -23,14 +23,25 @@ float angleBetweenTwoVector(float x1, float y1, float x2, float y2) {
 }
 #pragma endregion
 
-Graph::Graph(sf::RenderWindow *window) {
+Graph::Graph(int width, int height, sf::RenderWindow *window, 
+    float originPercentWidth = 0.5, float originPercentHeight = 0.5) {
+
     this->myWindow = window;
 
-    this->windowWidth = this->myWindow->getSize().x;
-    this->windowHeight = this->myWindow->getSize().y;
+    this->windowWidth = width;
+    this->windowHeight = height;
 
     this->myBuffer = new sf::RenderTexture();
     this->myBuffer->create(this->windowWidth, this->windowHeight);
+
+    this->originPercentWidth = originPercentWidth;
+    this->originPercentHeight = originPercentHeight;
+
+    this->originX = width * originPercentWidth;
+    this->originY = height * originPercentHeight;
+
+    this->backgroundColor = sf::Color::White;
+    this->lineColor = sf::Color::Black;
 }
 
 #pragma region line
@@ -58,8 +69,17 @@ void Graph::CreateAxis(float axisThickness) {
     //this->axes.push_back(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness, sf::Color::Red));
     //this->axes.push_back(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness, sf::Color::Red));
 
-    this->myBuffer->draw(this->CreateLine(0, halfHeight, 0, -halfHeight, axisThickness, sf::Color::Red));
-    this->myBuffer->draw(this->CreateLine(-halfWidth, 0, halfWidth, 0, axisThickness, sf::Color::Red));
+    this->myBuffer->draw(this->CreateLine(0, this->originY, 0, -(this->windowHeight - this->originY), axisThickness, sf::Color::Red));
+    this->myBuffer->draw(this->CreateLine(-this->originX, 0, this->windowWidth - this->originX, 0, axisThickness, sf::Color::Red));
+}
+
+void Graph::CreateMarker(float markerThickness) {
+    float halfWidth = this->windowWidth/2.0;
+    float halfHeight = this->windowHeight/2.0;
+
+    for (int x = -this->windowWidth; x <= this->windowWidth; x += this->pixelEquivalent) {
+        //this->myBuffer->draw()
+    }
 }
 #pragma endregion
 
@@ -69,8 +89,8 @@ std::pair<float, float> Graph::ConvertCoordsToDescartes(float x, float y) {
     float halfHeight = this->windowHeight/2.0;
 
     std::pair<float, float> newPair;
-    newPair.first = x - halfWidth;
-    newPair.second = -(y - halfHeight);
+    newPair.first = x - this->originX;
+    newPair.second = -(y - this->originY);
 
     return newPair;
 }
@@ -80,8 +100,8 @@ std::pair<float, float> Graph::ConvertCoordsToScreen(float x, float y) {
     float halfHeight = this->windowHeight/2.0;
 
     std::pair<float, float> newPair;
-    newPair.first = x + halfWidth;
-    newPair.second = -y + halfHeight;
+    newPair.first = x + this->originX;
+    newPair.second = -y + this->originY;
 
     return newPair;
 }
@@ -117,7 +137,6 @@ void Graph::CreateGraph() {
     while(x <= this->windowWidth/2.0) {
         float plotX = x * this->pixelEquivalent;
         float plotY = this->CalculateGraph(x) * this->pixelEquivalent;
-        //CreatePoint(plotX, plotY, 2);
 
         std::pair<float, float> newPoint(plotX, plotY);
         po.push_back(newPoint);
@@ -131,9 +150,7 @@ void Graph::CreateGraph() {
         int x1 = po[i].first, y1 = po[i].second;
         int x2 = po[i+1].first, y2 = po[i+1].second;
 
-        sf::RectangleShape newLineConnection = CreateLine(x1, y1, x2, y2, 1.0);
-        //this->graphLine.push_back(newLineConnection);
-        
+        sf::RectangleShape newLineConnection = CreateLine(x1, y1, x2, y2, 1.0, this->lineColor);
         this->myBuffer->draw(newLineConnection);
     }
     this->myBuffer->display();
@@ -160,8 +177,16 @@ void Graph::SetExpression(std::string ex) {
 #pragma endregion
 
 #pragma region drawBuffer
+void Graph::SetBackgroundColor(sf::Color col) {
+    this->backgroundColor = col;
+}
+
+void Graph::SetLineGraphColor(sf::Color col) {
+    this->lineColor = col;
+}
+
 void Graph::ClearDrawBuffer() {
-    this->myBuffer->clear();
+    this->myBuffer->clear(this->backgroundColor);
 }
 
 void Graph::DisplayDrawBuffer() {

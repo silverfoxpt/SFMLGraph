@@ -8,6 +8,8 @@
 #include "IMGui Stuffs/imgui.h"
 #include "IMGui Stuffs/imgui-SFML.h"
 
+//var
+char buf[64]; 
 
 void test() {
     //test 1
@@ -21,13 +23,16 @@ void test() {
     std::cout << RPN::RPNToValue(a, 1.0);
 }
 
-void GraphManipulation(Graph &newGraph) {
+void GraphManipulation(Graph &newGraph, std::string express) {
+    newGraph.SetPixelEquivalent(30); //1 unit = ? pixel
+    newGraph.SetSpacing(0.01);
+      
+    newGraph.SetBackgroundColor(sf::Color(0, 0, 0, 0));
+    newGraph.SetLineGraphColor(sf::Color::White);
+
     newGraph.ClearDrawBuffer();
 
-    newGraph.SetPixelEquivalent(20); //1 unit = ? pixel
-    newGraph.SetSpacing(0.01);
-
-    newGraph.SetExpression("tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
+    newGraph.SetExpression(express);
     newGraph.CreateAxis(1.0);
     newGraph.CreateGraph();
 
@@ -35,19 +40,34 @@ void GraphManipulation(Graph &newGraph) {
     newGraph.Debug();
 }
 
+void SFMLUpdate(Graph &newGraph) {
+    ImGui::Begin("Input");
+    ImGui::Text("Enter equation:");
+
+    ImGui::InputText(" ", buf, 64);
+    if (ImGui::Button("Submit", sf::Vector2f(100, 30))) {
+        std::string tmp = buf;
+        GraphManipulation(newGraph, tmp);
+    }
+
+    ImGui::End();
+}
+
 int main()
 {
     //test();
-    sf::RenderWindow window(sf::VideoMode(640, 480), "SFML project");
+    sf::RenderWindow window(sf::VideoMode(1080, 720), "SFML project");
     ImGui::SFML::Init(window);
 
-    Graph newGraph(&window);
-    GraphManipulation(newGraph);
+    Graph newGraph(640, 480, &window, 0.001, 0.999);
+    GraphManipulation(newGraph, "tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
 
     sf::Clock deltaTime;
+    memset(buf, 0, sizeof(buf));
+
     while (window.isOpen())
     {
-        std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
+        //std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -60,8 +80,7 @@ int main()
         ImGui::SFML::Update(window, deltaTime.restart());
         window.clear();
 
-        ImGui::Begin("Debug");
-        ImGui::End();
+        SFMLUpdate(newGraph);
 
         newGraph.DrawGraph();
 

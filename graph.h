@@ -10,10 +10,11 @@
 
 class Graph {
     public:
-        Graph(sf::RenderWindow *window);
+        Graph(int width, int height, sf::RenderWindow *myWindow, float originPercentWidth, float originPercentHeight);
 
         sf::RectangleShape CreateLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col);
         void CreateAxis(float axisThickness);
+        void CreateMarker(float markerThickness);
 
         void CreatePoint(float x, float y, float rad);
 
@@ -33,6 +34,9 @@ class Graph {
         void ClearDrawBuffer();
         void DisplayDrawBuffer();
 
+        void SetBackgroundColor(sf::Color col);
+        void SetLineGraphColor(sf::Color col);
+
     private:
         float windowWidth;
         float windowHeight;
@@ -43,8 +47,16 @@ class Graph {
         float spacing;
         float pixelEquivalent; //1 unit = ? pixel
 
+        float originPercentWidth;
+        float originPercentHeight;
+        float originX;
+        float originY;
+
         std::string expression;
         std::vector<std::string> myRPN;
+
+        sf::Color backgroundColor;
+        sf::Color lineColor;
 };
 
 #endif
