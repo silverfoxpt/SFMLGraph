@@ -39,7 +39,7 @@ void GraphManipulation(Graph &newGraph, std::string express) {
     newGraph.CreateAxis();
     newGraph.CreateMarker(2.5);
     newGraph.CreateGraph();
-    newGraph.CreateSpaceText(4);
+    newGraph.CreateSpaceText(4, 10);
 
     newGraph.DisplayDrawBuffer();
     newGraph.Debug();

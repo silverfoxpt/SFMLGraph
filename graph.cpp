@@ -291,19 +291,26 @@ void Graph::SetFont(sf::Font font) {
     this->spaceFont = font;
 }
 
-void Graph::CreateText(float x, float y, std::string text, float size) {
-    std::pair<float, float> screenPos = this->ConvertCoordsToScreen(x, y);
+void Graph::CreateText(float x, float y, std::string text, float size, std::pair<float, float> spacing) {
+    std::pair<float, float> screenPos = this->ConvertCoordsToScreen(x + spacing.first, y + spacing.second);
 
     sf::Text tex; 
     tex.setFont(this->spaceFont);
+    tex.setCharacterSize(size);
+    tex.setString(text);
+    tex.setPosition(screenPos.first, screenPos.second);
+
+    this->myBuffer->draw(tex);
 }
 
 void Graph::CreateSpaceText(float space, float size) {
     if (this->quarters[0] || this->quarters[3]) {
         int x = 0;
+        int c = 0;
         while(x <= this->windowWidth - this->originX) {
-            x += this->pixelEquivalent;
-            
+            x += this->pixelEquivalent; 
+            c++;
+            this->CreateText(x, 0, std::to_string(c), size, std::pair<float, float>(0, -space));
         } 
     }
 
