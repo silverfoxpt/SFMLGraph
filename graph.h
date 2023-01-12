@@ -10,9 +10,9 @@
 
 class Graph {
     public:
-        Graph(int width, int height, sf::RenderWindow *myWindow, float originPercentWidth, float originPercentHeight);
+        Graph(int width, int height, sf::RenderWindow *myWindow, float originPercentWidth, float originPercentHeight, float pixelEquivalent);
 
-        sf::RectangleShape CreateLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col, float transparency);
+        void CreateRectLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col);
         void CreateSingleLine(float startX, float startY, float endX, float endY, sf::Color col);
         void CreateAxis();
         void CreateMarker(float markerThickness);
@@ -42,7 +42,8 @@ class Graph {
 
         bool QuarterCheck(float x, float y, int quart);
 
-        void SetFont(sf::Font font);
+        void SetFont(sf::Font& font);
+        void CreateText(float x, float y, std::string text, float size, std::pair<float, float> spacing, std::pair<float, float> originPer);
         void CreateSpaceText(float spacing, float size);
 
     private:
@@ -59,6 +60,11 @@ class Graph {
         float originPercentHeight;
         float originX;
         float originY;
+
+        float leftDescartesBound;
+        float rightDescartesBound;
+        float topDescartesBound;
+        float bottomDescartesBound;
 
         std::string expression;
         std::vector<std::string> myRPN;

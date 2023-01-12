@@ -24,15 +24,18 @@ float angleBetweenTwoVector(float x1, float y1, float x2, float y2) {
 #pragma endregion
 
 Graph::Graph(int width, int height, sf::RenderWindow *window, 
-    float originPercentWidth = 0.5, float originPercentHeight = 0.5) {
+    float originPercentWidth = 0.5, float originPercentHeight = 0.5,
+    float pixelEquivalent = 30) {
 
     this->myWindow = window;
+    this->pixelEquivalent = pixelEquivalent;
 
     this->windowWidth = width;
     this->windowHeight = height;
 
     this->myBuffer = new sf::RenderTexture();
     this->myBuffer->create(this->windowWidth, this->windowHeight);
+    this->myBuffer->setSmooth(true);
 
     this->originPercentWidth = originPercentWidth;
     this->originPercentHeight = originPercentHeight;
@@ -40,14 +43,21 @@ Graph::Graph(int width, int height, sf::RenderWindow *window,
     this->originX = width * originPercentWidth;
     this->originY = height * originPercentHeight;
 
+    this->rightDescartesBound = (this->windowWidth - this->originX) / this->pixelEquivalent;
+    this->leftDescartesBound = (-this->originX) / this->pixelEquivalent;
+
+    this->topDescartesBound = (this->originY) / this->pixelEquivalent;
+    this->bottomDescartesBound = -(this->windowWidth - this->originY) / this->pixelEquivalent;
+
     this->backgroundColor = sf::Color::White;
     this->lineColor = sf::Color::Black;
 }
 
 #pragma region lines & axes
-sf::RectangleShape Graph::CreateLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col = sf::Color::White, float transparancy = 255) {
-    int width = dist(startX, startY, endX, endY);
+void Graph::CreateRectLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col = sf::Color::White) {
     std::pair<float, float> toScreen = this->ConvertCoordsToScreen(startX, startY);
+    std::pair<float, float> toScreen2 = this->ConvertCoordsToScreen(endX, endY);
+    float width = dist(toScreen.first, toScreen.second, toScreen2.first, toScreen2.second);
 
     sf::RectangleShape line(sf::Vector2f(width, lineThickness));
     line.setOrigin(sf::Vector2f(0, lineThickness/2.0));
@@ -55,11 +65,11 @@ sf::RectangleShape Graph::CreateLine(float startX, float startY, float endX, flo
     line.setFillColor(col);
 
     //rotation
-    int x1 = endX - startX, y1 = endY - startY;
+    float x1 = endX - startX, y1 = endY - startY;
     float angle = angleBetweenTwoVector(x1, y1, 1, 0);
     line.setRotation((endY < startY) ? angle : 360-angle);
 
-    return line;
+    this->myBuffer->draw(line);
 }
 
 void Graph::CreateSingleLine(float startX, float startY, float endX, float endY, sf::Color col) {
@@ -111,32 +121,32 @@ void Graph::CreateAxis() {
 void Graph::CreateMarker(float markerThickness) {
     if (this->quarters[0] || this->quarters[3]) {
         int x = 0;
-        while(x <= this->windowWidth - this->originX) {
-            x += this->pixelEquivalent;
+        while(x <= this->rightDescartesBound) {
+            x += 1;
             this->CreateSingleLine(x, markerThickness, x, -markerThickness, sf::Color::Red);  
         } 
     }
 
     if (this->quarters[0] || this->quarters[1]) {
         int y = 0;
-        while (y <= this->originY) {
-            y += this->pixelEquivalent;
+        while (y <= this->topDescartesBound) {
+            y += 1;
             this->CreateSingleLine(-markerThickness, y, markerThickness, y, sf::Color::Red);  
         }
     }
 
     if (this->quarters[1] || this->quarters[2]) {
         int x = 0;
-        while(x >= -this->originX) {
-            x -= this->pixelEquivalent;
+        while(x >= this->leftDescartesBound) {
+            x -= 1;
             this->CreateSingleLine(x, markerThickness, x, -markerThickness, sf::Color::Red);  
         } 
     }
 
     if (this->quarters[2] || this->quarters[3]) {
         int y = 0;
-        while (y >= -(this->windowHeight - this->originY)) {
-            y -= this->pixelEquivalent;
+        while (y >= this->bottomDescartesBound) {
+            y -= 1;
             this->CreateSingleLine(-markerThickness, y, markerThickness, y, sf::Color::Red);  
         }
     }
@@ -145,19 +155,16 @@ void Graph::CreateMarker(float markerThickness) {
 
 #pragma region pointConversion
 std::pair<float, float> Graph::ConvertCoordsToDescartes(float x, float y) {
-    float halfWidth = this->windowWidth/2.0;
-    float halfHeight = this->windowHeight/2.0;
-
     std::pair<float, float> newPair;
-    newPair.first = x - this->originX;
-    newPair.second = -(y - this->originY);
+    newPair.first = (x - this->originX) / this->pixelEquivalent;
+    newPair.second = -(y - this->originY) / this->pixelEquivalent;
 
     return newPair;
 }
 
 std::pair<float, float> Graph::ConvertCoordsToScreen(float x, float y) {
-    float halfWidth = this->windowWidth/2.0;
-    float halfHeight = this->windowHeight/2.0;
+    x *= this->pixelEquivalent;
+    y *= this->pixelEquivalent;
 
     std::pair<float, float> newPair;
     newPair.first = x + this->originX;
@@ -183,12 +190,12 @@ void Graph::CreatePoint(float x, float y, float rad) {
 
 #pragma region graph
 void Graph::CreateGraph() {
-    float x = -this->windowWidth/2.0;
+    float x = this->leftDescartesBound;
     std::vector<std::pair<float, float>> po;
 
-    while(x <= this->windowWidth/2.0) {
-        float plotX = x * this->pixelEquivalent;
-        float plotY = this->CalculateGraph(x) * this->pixelEquivalent;
+    while(x <= this->rightDescartesBound) {
+        float plotX = x;
+        float plotY = this->CalculateGraph(x);
         x += this->spacing;
 
         bool rightQuart = false;
@@ -205,20 +212,19 @@ void Graph::CreateGraph() {
     //create lines
     int n = po.size();
     for (int i = 0; i < n-1; i++) {
-        int x1 = po[i].first, y1 = po[i].second;
-        int x2 = po[i+1].first, y2 = po[i+1].second;
+        float x1 = po[i].first, y1 = po[i].second;
+        float x2 = po[i+1].first, y2 = po[i+1].second;
 
-        this->CreateSingleLine(x1, y1, x2, y2, this->lineColor);
+        //this->CreateSingleLine(x1, y1, x2, y2, this->lineColor); 
+        this->CreateRectLine(x1, y1, x2, y2, 3, this->lineColor);
     }
     this->myBuffer->display();
 }
 
 void Graph::DrawGraph() {
-    /*for (const auto &line: this->graphLine) {
-        this->myWindow->draw(line);
-    }*/
     const sf::Texture& texture = this->myBuffer->getTexture();
     sf::Sprite tmpSprite(texture);
+
     tmpSprite.setPosition(this->bufferPos.first, this->bufferPos.second);
 
     this->myWindow->draw(tmpSprite);
@@ -287,18 +293,24 @@ bool Graph::QuarterCheck(float x, float y, int quart) {
 #pragma endregion
 
 #pragma region spaceText
-void Graph::SetFont(sf::Font font) {
+void Graph::SetFont(sf::Font &font) {
     this->spaceFont = font;
 }
 
-void Graph::CreateText(float x, float y, std::string text, float size, std::pair<float, float> spacing) {
-    std::pair<float, float> screenPos = this->ConvertCoordsToScreen(x + spacing.first, y + spacing.second);
+void Graph::CreateText(float x, float y, std::string text, float size, std::pair<float, float> spacing, std::pair<float, float> originPer) {
+    std::pair<float, float> screenCoords = this->ConvertCoordsToScreen(x + spacing.first, y + spacing.second);
 
     sf::Text tex; 
     tex.setFont(this->spaceFont);
     tex.setCharacterSize(size);
     tex.setString(text);
-    tex.setPosition(screenPos.first, screenPos.second);
+    tex.setFillColor(sf::Color::Red);
+
+    int a = tex.getLocalBounds().width * originPer.first;
+    int b = tex.getLocalBounds().height * originPer.second;
+    tex.setOrigin(sf::Vector2f(a, b));
+
+    tex.setPosition((int) screenCoords.first, (int) screenCoords.second);
 
     this->myBuffer->draw(tex);
 }
@@ -307,33 +319,48 @@ void Graph::CreateSpaceText(float space, float size) {
     if (this->quarters[0] || this->quarters[3]) {
         int x = 0;
         int c = 0;
-        while(x <= this->windowWidth - this->originX) {
-            x += this->pixelEquivalent; 
+
+        while(x <= this->rightDescartesBound) {
+            x += 1; 
             c++;
-            this->CreateText(x, 0, std::to_string(c), size, std::pair<float, float>(0, -space));
+            
+            this->CreateText(x, 0, std::to_string(c), size, std::pair<float, float>(0, -space), std::pair<float, float>(0.5, 0));
         } 
     }
 
     if (this->quarters[0] || this->quarters[1]) {
         int y = 0;
-        while (y <= this->originY) {
-            y += this->pixelEquivalent;
+        int c = 0;
+
+        while (y <= this->topDescartesBound) {
+            y += 1; 
+            c++;
             
+            this->CreateText(0, y, std::to_string(c), size, std::pair<float, float>(-space, 0), std::pair<float, float>(1, 1.5));
         }
     }
 
     if (this->quarters[1] || this->quarters[2]) {
         int x = 0;
-        while(x >= -this->originX) {
-            x -= this->pixelEquivalent;
+        int c = 0;
+
+        while(x >= this->leftDescartesBound) {
+            x -= 1; 
+            c--;
             
+            this->CreateText(x, 0, std::to_string(c), size, std::pair<float, float>(0, -space), std::pair<float, float>(0.5, 0));
         } 
     }
 
     if (this->quarters[2] || this->quarters[3]) {
         int y = 0;
-        while (y >= -(this->windowHeight - this->originY)) {
-            y -= this->pixelEquivalent;
+        int c = 0;
+
+        while (y >= this->bottomDescartesBound) {
+            y -= 1; 
+            c--;
+            
+            this->CreateText(0, y, std::to_string(c), size, std::pair<float, float>(-space, 0), std::pair<float, float>(1, 1.5));
             
         }
     }

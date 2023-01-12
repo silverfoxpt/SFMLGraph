@@ -10,6 +10,7 @@
 
 //var
 char buf[64]; 
+sf::Font myFont;
 
 void test() {
     //test 1
@@ -24,8 +25,12 @@ void test() {
 }
 
 void GraphManipulation(Graph &newGraph, std::string express) {
-    newGraph.SetPixelEquivalent(30); //1 unit = ? pixel
-    newGraph.SetSpacing(0.01);
+    if (!myFont.loadFromFile("./res/font/aparaj.ttf")) {
+        std::cout << "Font load failed";
+    }
+    newGraph.SetFont(myFont);
+
+    newGraph.SetSpacing(0.0005);
     newGraph.SetQuarters(true, true, true, true);
       
     newGraph.SetBackgroundColor(sf::Color(255, 255, 255, 255));
@@ -37,9 +42,9 @@ void GraphManipulation(Graph &newGraph, std::string express) {
 
     newGraph.SetExpression(express);
     newGraph.CreateAxis();
-    newGraph.CreateMarker(2.5);
-    newGraph.CreateGraph();
-    newGraph.CreateSpaceText(4, 10);
+    newGraph.CreateMarker(0.08);
+    newGraph.CreateSpaceText(0.17, 15);
+    newGraph.CreateGraph();    
 
     newGraph.DisplayDrawBuffer();
     newGraph.Debug();
@@ -64,8 +69,9 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1080, 720), "SFML project");
     ImGui::SFML::Init(window);
 
-    Graph newGraph(640, 480, &window, 0.2, 0.8);
+    Graph newGraph(640, 480, &window, 0.2, 0.8, 30);
     GraphManipulation(newGraph, "tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
+    //GraphManipulation(newGraph, "x^2");
 
     sf::Clock deltaTime;
     memset(buf, 0, sizeof(buf));
