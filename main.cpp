@@ -26,17 +26,20 @@ void test() {
 void GraphManipulation(Graph &newGraph, std::string express) {
     newGraph.SetPixelEquivalent(30); //1 unit = ? pixel
     newGraph.SetSpacing(0.01);
+    newGraph.SetQuarters(true, true, true, true);
       
-    newGraph.SetBackgroundColor(sf::Color(0, 0, 0, 0));
-    newGraph.SetLineGraphColor(sf::Color::White);
+    newGraph.SetBackgroundColor(sf::Color(255, 255, 255, 255));
+    newGraph.SetLineGraphColor(sf::Color(0, 0, 0, 150));
 
     newGraph.SetBufferPosition(50, 50);
 
     newGraph.ClearDrawBuffer();
 
     newGraph.SetExpression(express);
-    newGraph.CreateAxis(1.0);
+    newGraph.CreateAxis();
+    newGraph.CreateMarker(2.5);
     newGraph.CreateGraph();
+    newGraph.CreateSpaceText(4);
 
     newGraph.DisplayDrawBuffer();
     newGraph.Debug();
@@ -61,7 +64,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1080, 720), "SFML project");
     ImGui::SFML::Init(window);
 
-    Graph newGraph(640, 480, &window, 0.5, 0.5);
+    Graph newGraph(640, 480, &window, 0.2, 0.8);
     GraphManipulation(newGraph, "tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
 
     sf::Clock deltaTime;
