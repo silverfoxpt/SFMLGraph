@@ -23,11 +23,10 @@ float angleBetweenTwoVector(float x1, float y1, float x2, float y2) {
 }
 #pragma endregion
 
-Graph::Graph(int width, int height, sf::RenderWindow *window, 
+Graph::Graph(int width, int height, 
     float originPercentWidth = 0.5, float originPercentHeight = 0.5,
     float pixelEquivalent = 30) {
 
-    this->myWindow = window;
     this->pixelEquivalent = pixelEquivalent;
 
     this->windowWidth = width;
@@ -52,6 +51,8 @@ Graph::Graph(int width, int height, sf::RenderWindow *window,
     this->backgroundColor = sf::Color::White;
     this->lineColor = sf::Color::Black;
 }
+
+Graph::Graph() {};
 
 #pragma region lines & axes
 void Graph::CreateRectLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col = sf::Color::White) {
@@ -216,18 +217,9 @@ void Graph::CreateGraph() {
         float x2 = po[i+1].first, y2 = po[i+1].second;
 
         //this->CreateSingleLine(x1, y1, x2, y2, this->lineColor); 
-        this->CreateRectLine(x1, y1, x2, y2, 3, this->lineColor);
+        this->CreateRectLine(x1, y1, x2, y2, lineSize, this->lineColor);
     }
     this->myBuffer->display();
-}
-
-void Graph::DrawGraph() {
-    const sf::Texture& texture = this->myBuffer->getTexture();
-    sf::Sprite tmpSprite(texture);
-
-    tmpSprite.setPosition(this->bufferPos.first, this->bufferPos.second);
-
-    this->myWindow->draw(tmpSprite);
 }
 
 float Graph::CalculateGraph(float x) {
@@ -246,6 +238,9 @@ void Graph::DisplayDrawBuffer() {
 #pragma endregion
 
 #pragma region setters
+void Graph::SetGraphLineThickness(float thick) {
+    this->lineSize = thick;
+}
 void Graph::SetQuarters(bool first, bool sec, bool third, bool fourth) {
     this->quarters[0] = first;
     this->quarters[1] = sec;

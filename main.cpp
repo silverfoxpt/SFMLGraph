@@ -8,9 +8,35 @@
 #include "IMGui Stuffs/imgui.h"
 #include "IMGui Stuffs/imgui-SFML.h"
 
-//var
-char buf[64]; 
+#pragma region variables
+sf::RenderWindow window(sf::VideoMode(1440, 720), "SFML project");
+Graph newGraph;
+
+char expressBuffer[64] = "sin(tan(x))"; 
+
+float graphSpacing = 0.01;
+float pixelEqui = 30;
+float lineSize = 3;
+
+float bufferX = 50;
+float bufferY = 50;
+float originX = 0.2;
+float originY = 0.8;
+
+float markerSpacing = 0.08;
+float textSpacing = 0.17;
+int textSize = 15;
+
+float backgroundCol[4] = {1, 1, 1, 1};
+float lineGraphCol[4] = {0, 0, 0, 0.6};
+
+int bufferWidth = 640;
+int bufferHeight = 480;
+
+bool graphQuarters[4] = {true, true, true, true};
+
 sf::Font myFont;
+#pragma endregion
 
 void test() {
     //test 1
@@ -24,40 +50,86 @@ void test() {
     std::cout << RPN::RPNToValue(a, 1.0);
 }
 
-void GraphManipulation(Graph &newGraph, std::string express) {
+void DrawGraph() {
+    sf::Texture tex = newGraph.myBuffer->getTexture();
+    sf::Sprite tmpSprite(tex);
+    tmpSprite.setPosition(bufferX, bufferY);
+
+    window.draw(tmpSprite);
+}
+
+void GraphManipulation() {
     if (!myFont.loadFromFile("./res/font/aparaj.ttf")) {
         std::cout << "Font load failed";
     }
+    //setters
+    newGraph = Graph(bufferWidth, bufferHeight, originX, originY, pixelEqui);
     newGraph.SetFont(myFont);
 
-    newGraph.SetSpacing(0.0005);
-    newGraph.SetQuarters(true, true, true, true);
+    newGraph.SetSpacing(graphSpacing);
+    newGraph.SetQuarters(graphQuarters[0], graphQuarters[1], graphQuarters[2], graphQuarters[3]);
+    newGraph.SetGraphLineThickness(lineSize);
       
-    newGraph.SetBackgroundColor(sf::Color(255, 255, 255, 255));
-    newGraph.SetLineGraphColor(sf::Color(0, 0, 0, 150));
+    newGraph.SetBackgroundColor(sf::Color(backgroundCol[0] * 255, backgroundCol[1] * 255, backgroundCol[2] * 255, backgroundCol[3] * 255));
+    newGraph.SetLineGraphColor(sf::Color(lineGraphCol[0] * 255, lineGraphCol[1] * 255, lineGraphCol[2] * 255, lineGraphCol[3] * 255));
 
-    newGraph.SetBufferPosition(50, 50);
+    newGraph.SetBufferPosition(bufferX, bufferY);
+    newGraph.SetExpression(expressBuffer);
 
+    //draw & create
     newGraph.ClearDrawBuffer();
 
-    newGraph.SetExpression(express);
     newGraph.CreateAxis();
-    newGraph.CreateMarker(0.08);
-    newGraph.CreateSpaceText(0.17, 15);
+    newGraph.CreateMarker(markerSpacing);
+    newGraph.CreateSpaceText(textSpacing, textSize);
     newGraph.CreateGraph();    
 
     newGraph.DisplayDrawBuffer();
     newGraph.Debug();
 }
 
-void SFMLUpdate(Graph &newGraph) {
+void SFMLUpdate() {
     ImGui::Begin("Input");
-    ImGui::Text("Enter equation:");
 
-    ImGui::InputText(" ", buf, 64);
+    //expression
+    ImGui::Text("Graph manipulation");
+    ImGui::InputText("Equation", expressBuffer, 64);
+    ImGui::Text("");
+
+    //graph manipulation
+    ImGui::SliderFloat("Spacing", &graphSpacing, 0.001, 2.0, "%.3f");
+    ImGui::SliderFloat("Pixel equivalent", &pixelEqui, 1, 200, "%.3f");
+    ImGui::SliderFloat("Graph line thickness", &lineSize, 0.1, 10, "%.3f");
+    ImGui::Text("");
+
+    ImGui::Checkbox("First quarter", &graphQuarters[0]);
+    ImGui::Checkbox("Second quarter", &graphQuarters[1]);
+    ImGui::Checkbox("Third quarter", &graphQuarters[2]);
+    ImGui::Checkbox("Fourth quarter", &graphQuarters[3]);
+    ImGui::Text("");
+
+    //colors
+    ImGui::ColorEdit4("Background color", backgroundCol);
+    ImGui::ColorEdit4("Line graph color", lineGraphCol);
+    ImGui::Text("");
+
+    //buffers
+    ImGui::Text("Buffer manipulation");
+    ImGui::InputFloat("Buffer position X", &bufferX, 0.5, 0.5);
+    ImGui::InputFloat("Buffer position Y", &bufferY, 0.5, 0.5);
+    ImGui::InputInt("Buffer width", &bufferWidth);
+    ImGui::InputInt("Buffer height", &bufferHeight);
+    ImGui::SliderFloat("Origin X", &originX, 0.0, 1.0, "%.3f");
+    ImGui::SliderFloat("Origin Y", &originY, 0.0, 1.0, "%.3f");
+    ImGui::Text("");
+
+    //others
+    ImGui::InputFloat("Marker spacing", &markerSpacing, 0.01, 0.1);
+    ImGui::InputFloat("Text spacing", &textSpacing, 0.01, 1);
+    ImGui::InputInt("Text size", &textSize);
+
     if (ImGui::Button("Submit", sf::Vector2f(100, 30))) {
-        std::string tmp = buf;
-        GraphManipulation(newGraph, tmp);
+        GraphManipulation();
     }
 
     ImGui::End();
@@ -66,15 +138,12 @@ void SFMLUpdate(Graph &newGraph) {
 int main()
 {
     //test();
-    sf::RenderWindow window(sf::VideoMode(1080, 720), "SFML project");
     ImGui::SFML::Init(window);
 
-    Graph newGraph(640, 480, &window, 0.2, 0.8, 30);
-    GraphManipulation(newGraph, "tan(exp(sin(tan(abs(tan(sin(x)*2)/2)+2)-1)))");
-    //GraphManipulation(newGraph, "x^2");
+    newGraph = Graph(bufferWidth, bufferHeight, originX, originY, pixelEqui);
+    GraphManipulation();
 
     sf::Clock deltaTime;
-    memset(buf, 0, sizeof(buf));
 
     while (window.isOpen())
     {
@@ -91,9 +160,9 @@ int main()
         ImGui::SFML::Update(window, deltaTime.restart());
         window.clear();
 
-        SFMLUpdate(newGraph);
+        SFMLUpdate();
 
-        newGraph.DrawGraph();
+        DrawGraph();
 
         ImGui::SFML::Render(window);
         window.display();

@@ -10,7 +10,10 @@
 
 class Graph {
     public:
-        Graph(int width, int height, sf::RenderWindow *myWindow, float originPercentWidth, float originPercentHeight, float pixelEquivalent);
+        sf::RenderTexture *myBuffer;
+
+        Graph();
+        Graph(int width, int height, float originPercentWidth, float originPercentHeight, float pixelEquivalent);
 
         void CreateRectLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col);
         void CreateSingleLine(float startX, float startY, float endX, float endY, sf::Color col);
@@ -23,9 +26,9 @@ class Graph {
         std::pair<float, float> ConvertCoordsToDescartes(float x, float y);
         
         void SetQuarters(bool first, bool second, bool third, bool fourth);
-        void DrawGraph();
         void CreateGraph();
         float CalculateGraph(float x);
+        void SetGraphLineThickness(float thick);
 
         void SetPixelEquivalent(float eqi);
         void SetSpacing(float spacing);
@@ -50,11 +53,9 @@ class Graph {
         float windowWidth;
         float windowHeight;
 
-        sf::RenderWindow *myWindow;
-        sf::RenderTexture *myBuffer;
-
         float spacing;
         float pixelEquivalent; //1 unit = ? pixel
+        float lineSize;
 
         float originPercentWidth;
         float originPercentHeight;
