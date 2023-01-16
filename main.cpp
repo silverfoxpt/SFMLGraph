@@ -5,12 +5,15 @@
 
 #include "graph.h"
 #include "RPN.h"
+#include "ASTHelper.h"
+
 #include "IMGui Stuffs/imgui.h"
 #include "IMGui Stuffs/imgui-SFML.h"
 
 #pragma region variables
 sf::RenderWindow window(sf::VideoMode(1440, 720), "SFML project");
 Graph newGraph;
+ASTHelper myASTHelper;
 
 char expressBuffer[64] = "sin(tan(x))"; 
 
@@ -38,7 +41,8 @@ bool graphQuarters[4] = {true, true, true, true};
 sf::Font myFont;
 #pragma endregion
 
-void test() {
+#pragma region Test
+void TestInitialize() {
     //test 1
     std::vector<std::string> a = RPN::infixToRPN("(3+7/7-2/5)*(9+6/(3-7))");
     for (int i = 0; i < a.size(); i++) {
@@ -50,6 +54,15 @@ void test() {
     std::cout << RPN::RPNToValue(a, 1.0);
 }
 
+void TestInDrawLoop() {
+    std::vector<textInfoTrack> chars = myASTHelper.GetTextFromDefaultString("(x + 9)");
+    myASTHelper.RenderToBuffer(chars);
+
+    myASTHelper.DrawBufferToWindow(window);
+}
+#pragma endregion
+
+#pragma region helper
 void DrawGraph() {
     sf::Texture tex = newGraph.myBuffer->getTexture();
     sf::Sprite tmpSprite(tex);
@@ -134,10 +147,11 @@ void SFMLUpdate() {
 
     ImGui::End();
 }
+#pragma endregion
 
 int main()
 {
-    //test();
+    //TestInitialize();
     ImGui::SFML::Init(window);
 
     newGraph = Graph(bufferWidth, bufferHeight, originX, originY, pixelEqui);
@@ -145,9 +159,12 @@ int main()
 
     sf::Clock deltaTime;
 
+    myASTHelper.SetFont(myFont);
+    myASTHelper.SetFontSize(30);
+
     while (window.isOpen())
     {
-        std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
+        //std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -163,6 +180,7 @@ int main()
         SFMLUpdate();
 
         DrawGraph();
+        TestInDrawLoop();
 
         ImGui::SFML::Render(window);
         window.display();
