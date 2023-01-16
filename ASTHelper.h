@@ -13,6 +13,7 @@ class textInfoTrack {
 
         //constructors
         textInfoTrack(sf::Text tex) {
+            tex.setPosition(tex.getPosition().x, tex.getPosition().y - (tex.getGlobalBounds().top - tex.getPosition().y));
             this->text = tex;
         }
 
@@ -24,14 +25,22 @@ class textInfoTrack {
         float getPositionY() { return text.getPosition().y; }
 
         float getWidth() { return text.getGlobalBounds().width; }
-        float getHeight() { return text.getGlobalBounds().width; }
+        float getHeight() { return text.getGlobalBounds().height; }
 
-        float getBottomX() { return getPositionX() + getWidth(); }
-        float getBottomY() { return getPositionY() + getHeight(); }
+        float getBottomX() { return text.getGlobalBounds().left + getWidth(); }
+        float getBottomY() { return text.getGlobalBounds().top + getHeight(); }
         
         //setters
         void SetPosition(float x, float y) {
             text.setPosition(sf::Vector2f(x, y));
+        }
+
+        void moveX(float x) {
+            text.setPosition(text.getPosition().x + x, text.getPosition().y);
+        }
+
+        void moveY(float x) {
+            text.setPosition(text.getPosition().x, text.getPosition().y + x);
         }
 
         void ScaleUp(float sc) { text.scale(sf::Vector2f(sc, sc));}

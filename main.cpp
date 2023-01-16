@@ -55,8 +55,12 @@ void TestInitialize() {
 }
 
 void TestInDrawLoop() {
-    std::vector<textInfoTrack> chars = myASTHelper.GetTextFromDefaultString("(x + 9)");
-    myASTHelper.RenderToBuffer(chars);
+    myASTHelper.SetFontSize(60);
+    std::vector<textInfoTrack> char1 = myASTHelper.GetTextFromDefaultString("9");
+    myASTHelper.SetFontSize(30);
+    std::vector<textInfoTrack> char2 = myASTHelper.GetTextFromDefaultString("x-2+3sin(x)");
+    std::vector<textInfoTrack> merge = myASTHelper.MergeTwoTextsToRight(char1, char2);
+    myASTHelper.RenderToBuffer(merge);
 
     myASTHelper.DrawBufferToWindow(window);
 }

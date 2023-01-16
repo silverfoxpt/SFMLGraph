@@ -32,6 +32,16 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "deque": "cpp",
-        "ctime": "cpp"
+        "ctime": "cpp",
+        "atomic": "cpp",
+        "cstdarg": "cpp",
+        "cstddef": "cpp",
+        "cstring": "cpp",
+        "algorithm": "cpp",
+        "iterator": "cpp",
+        "map": "cpp",
+        "memory": "cpp",
+        "memory_resource": "cpp",
+        "string": "cpp"
     }
 }
