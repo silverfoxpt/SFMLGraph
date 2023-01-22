@@ -3,10 +3,13 @@
 #pragma region helper
 ASTHelper::ASTHelper() {
 
-};
+}
 
 void ASTHelper::SetFont(sf::Font &font) {
     this->textFont = font;
+
+    //auto& texture = const_cast<sf::Texture&>(font.getTexture(30));   
+    //texture.setSmooth(false);
 }
 
 void ASTHelper::SetFontSize(int fs) {
@@ -15,6 +18,7 @@ void ASTHelper::SetFontSize(int fs) {
 
 void ASTHelper::CreateBuffer(int width, int height) {
     this->myTex.create(width, height);
+    this->myTex.setSmooth(false);
 }
 
 void ASTHelper::ClearBuffer() {
@@ -36,86 +40,135 @@ void ASTHelper::RenderToBuffer(std::vector<textInfoTrack> &chars) {
     int maxWidth = 0;
     int maxHeight = 0;
     for (auto &text: chars) {
+        //text.Debug();
+
         maxWidth    = std::max((float) maxWidth, text.getBottomX());
         maxHeight   = std::max((float) maxHeight, text.getBottomY());
     }
 
-    this->CreateBuffer(200, 200);
+    this->CreateBuffer(maxWidth, maxHeight);
     this->ClearBuffer();
     for (auto &text: chars) {
-        this->myTex.draw(text.text);
+        if (text.useText)   this->myTex.draw(text.text);
+        else                this->myTex.draw(text.shape);
     }
     this->DisplayBuffer();
 }
 
-std::vector<textInfoTrack>  ASTHelper::GetTextFromDefaultChar(char c) {
-    std::vector<textInfoTrack> ret;
-
-    sf::Text tmp;
-    tmp.setFillColor(sf::Color::White);
-    tmp.setString(std::string(1, c));
-    tmp.setFont(this->textFont);
-    tmp.setCharacterSize(this->fontSize);
-
-    textInfoTrack tex(tmp);
-    ret.push_back(tex);
-
-    return ret;
-}   
-
-std::vector<textInfoTrack> ASTHelper::GetTextFromDefaultString(std::string s) {
+textInfoString ASTHelper::GetTextFromDefaultString(sf::String s) {
     std::vector<textInfoTrack> ret;
 
     sf::Text tmp;
     tmp.setFillColor(sf::Color::White);
     tmp.setFont(this->textFont);
-    tmp.setString(s);    
     tmp.setCharacterSize(this->fontSize);
+    tmp.setString(s);
+
+    //VERY IMPORTANT LINE :) Put text origin back to its true bound: https://en.sfml-dev.org/forums/index.php?topic=20284.0
+    tmp.setOrigin(sf::Vector2f(tmp.getGlobalBounds().left, tmp.getGlobalBounds().top)); 
 
     textInfoTrack tex(tmp);
     ret.push_back(tex);
 
-    return ret;
+    textInfoString inf(ret, 10000);
+
+    return inf;
 }
 
-std::vector<textInfoTrack> ASTHelper::MergeTwoTextsToRight(std::vector<textInfoTrack> &main, std::vector<textInfoTrack> &sub) {
-    int mainHeight = 0, mainWidth = 0;
-    int subHeight = 0, subWidth = 0;
+textInfoString ASTHelper::GetVerticalSlash(int width, int height) {
+    std::vector<textInfoTrack> ret;
 
-    for (auto &tex: main) {
-        mainWidth = std::max(mainWidth, (int) tex.getBottomX());
-        mainHeight = std::max(mainHeight, (int) tex.getBottomY());
-    }
+    sf::RectangleShape tmp(sf::Vector2f(width, height));
+    tmp.setFillColor(sf::Color::White);
 
-    for (auto &tex: sub) {
-        subWidth = std::max(subWidth, (int) tex.getBottomX());
-        subHeight = std::max(subHeight, (int) tex.getBottomY());
-    }
+    textInfoTrack tex(tmp);
+    ret.push_back(tex);
+
+    textInfoString inf(ret, 10000);
+
+    return inf;
+}
+
+textInfoString ASTHelper::MergeTwoTextsToRight(textInfoString &main, textInfoString &sub,
+    float scaleMain = 1.0, float scaleSub = 1.0) {
+    //scale shit up
+    main.scale(scaleMain);
+    sub.scale(scaleSub);
+
+    //calculate heights & widths
+    int mainHeight  = main.getTotalHeight(),    mainWidth   = main.getTotalWidth();
+    int subHeight   = sub.getTotalHeight(),     subWidth    = sub.getTotalWidth();
 
     //start moving shit around
     //move all of sub to right of main
-    for (auto &tex: sub) {
-        tex.moveX(mainWidth);
-    }
+    sub.moveX(mainWidth + 4); //hardcode
 
     //move main/sub up or down depends on if main/sub is higher/lower than the other
     if (mainHeight > subHeight) {
         int newY = mainHeight/2.0 - subHeight/2.0;
-        for (auto &tex: sub) {
-            tex.moveY(newY);
-        }
+        sub.moveY(newY);
+    }
+    else if (subHeight > mainHeight) {
+        int newY = subHeight/2.0 - mainHeight/2.0;
+        main.moveY(newY);
     }
 
-    //merge
-    std::vector<textInfoTrack> me;
-    for (auto &tex: main) {
-        me.push_back(tex);
+    //merge 2 file
+    main.merge(sub);
+
+    return main;
+}
+
+textInfoString ASTHelper::MergeTwoTextsToDown(textInfoString &main, textInfoString &sub, 
+    float scaleMain = 1.0, float scaleSub = 1.0) {
+    //meddle something with scaling here? no need yet... though
+
+    //calculate heights & widths
+    int mainHeight = main.getTotalHeight(), mainWidth = main.getTotalWidth();
+    int subHeight = sub.getTotalHeight(), subWidth = sub.getTotalWidth();
+
+    //start moving shit around
+    //move all of sub to bottom of main
+    sub.moveY(mainHeight + 6); //hardcode
+
+    //move main/sub left/right depends on if main/sub is wider/shorter than the other
+    if (mainWidth > subWidth) {
+        int newX = mainWidth/2.0 - subWidth/2.0;
+        sub.moveX(newX);
+    }
+    else if (subWidth > mainWidth) {
+        int newX = subWidth/2.0 - mainWidth/2.0;
+        main.moveX(newX);
     }
 
-    for (auto &tex: sub) {
-        me.push_back(tex);
-    }
-    return me;
+    //merge 2 file
+    main.merge(sub);
+
+    return main;
+}
+
+textInfoString ASTHelper::MergeTwoTextsToUpLeft(textInfoString &main, textInfoString &sub, float percentDown,
+    float scaleMain = 1.0, float scaleSub = 1.0) {
+    //scale shit up
+    main.scale(scaleMain);
+    sub.scale(scaleSub);
+
+    //calculate heights & widths
+    int mainHeight = main.getTotalHeight(), mainWidth = main.getTotalWidth();
+    int subHeight = sub.getTotalHeight(), subWidth = sub.getTotalWidth();
+
+    //start moving shit around
+    //move all of sub to right of main
+    sub.moveX(mainWidth + 4); //hardcode
+
+    //move the base down
+    float heightDown = subHeight * percentDown;
+    main.moveY((int) heightDown);    
+
+    //merge 2 file
+    main.merge(sub);
+
+    return main;
 }
 #pragma endregion
 

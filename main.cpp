@@ -6,6 +6,7 @@
 #include "graph.h"
 #include "RPN.h"
 #include "ASTHelper.h"
+#include "TEST.h"
 
 #include "IMGui Stuffs/imgui.h"
 #include "IMGui Stuffs/imgui-SFML.h"
@@ -21,8 +22,8 @@ float graphSpacing = 0.01;
 float pixelEqui = 30;
 float lineSize = 3;
 
-float bufferX = 50;
-float bufferY = 50;
+float bufferX = 150;
+float bufferY = 250;
 float originX = 0.2;
 float originY = 0.8;
 
@@ -45,7 +46,7 @@ sf::Font myFont;
 void TestInitialize() {
     //test 1
     std::vector<std::string> a = RPN::infixToRPN("(3+7/7-2/5)*(9+6/(3-7))");
-    for (int i = 0; i < a.size(); i++) {
+    for (int i = 0; i < (int) a.size(); i++) {
         std::cout << a[i] << " ";
     }
     std::cout << '\n';
@@ -55,6 +56,7 @@ void TestInitialize() {
 }
 
 void TestInDrawLoop() {
+    /*
     myASTHelper.SetFontSize(60);
     std::vector<textInfoTrack> char1 = myASTHelper.GetTextFromDefaultString("9");
     myASTHelper.SetFontSize(30);
@@ -62,11 +64,21 @@ void TestInDrawLoop() {
     std::vector<textInfoTrack> merge = myASTHelper.MergeTwoTextsToRight(char1, char2);
     myASTHelper.RenderToBuffer(merge);
 
+    myASTHelper.DrawBufferToWindow(window);*/
+
+    //test2
+    //std::vector<std::string> rp = RPN::infixToRPN("(x-2*5)/((x+3)/(x-3+9/x/x+5-7/3-8/9/6/(x+2)))");
+    std::vector<std::string> rp = RPN::infixToRPN("((x+2)/5)^(3*x-5)^(2/5/x)-1");    
+    //std::vector<std::string> rp = RPN::infixToRPN("(2/5/x)^(2/x/5)");
+
+    textInfoString fin = RPN::RPNToDisplay(rp, myASTHelper);
+
+    myASTHelper.RenderToBuffer(fin.tex);
     myASTHelper.DrawBufferToWindow(window);
 }
 #pragma endregion
 
-#pragma region helper
+#pragma region Helper
 void DrawGraph() {
     sf::Texture tex = newGraph.myBuffer->getTexture();
     sf::Sprite tmpSprite(tex);
@@ -76,7 +88,7 @@ void DrawGraph() {
 }
 
 void GraphManipulation() {
-    if (!myFont.loadFromFile("./res/font/aparaj.ttf")) {
+    if (!myFont.loadFromFile("./res/font/Asana-Math.ttf")) {
         std::cout << "Font load failed";
     }
     //setters
@@ -111,24 +123,24 @@ void SFMLUpdate() {
     //expression
     ImGui::Text("Graph manipulation");
     ImGui::InputText("Equation", expressBuffer, 64);
-    ImGui::Text("");
+    ImGui::Text(" ");
 
     //graph manipulation
     ImGui::SliderFloat("Spacing", &graphSpacing, 0.001, 2.0, "%.3f");
     ImGui::SliderFloat("Pixel equivalent", &pixelEqui, 1, 200, "%.3f");
     ImGui::SliderFloat("Graph line thickness", &lineSize, 0.1, 10, "%.3f");
-    ImGui::Text("");
+    ImGui::Text(" ");
 
     ImGui::Checkbox("First quarter", &graphQuarters[0]);
     ImGui::Checkbox("Second quarter", &graphQuarters[1]);
     ImGui::Checkbox("Third quarter", &graphQuarters[2]);
     ImGui::Checkbox("Fourth quarter", &graphQuarters[3]);
-    ImGui::Text("");
+    ImGui::Text(" ");
 
     //colors
     ImGui::ColorEdit4("Background color", backgroundCol);
     ImGui::ColorEdit4("Line graph color", lineGraphCol);
-    ImGui::Text("");
+    ImGui::Text(" ");
 
     //buffers
     ImGui::Text("Buffer manipulation");
@@ -138,7 +150,7 @@ void SFMLUpdate() {
     ImGui::InputInt("Buffer height", &bufferHeight);
     ImGui::SliderFloat("Origin X", &originX, 0.0, 1.0, "%.3f");
     ImGui::SliderFloat("Origin Y", &originY, 0.0, 1.0, "%.3f");
-    ImGui::Text("");
+    ImGui::Text(" ");
 
     //others
     ImGui::InputFloat("Marker spacing", &markerSpacing, 0.01, 0.1);
@@ -155,20 +167,22 @@ void SFMLUpdate() {
 
 int main()
 {
+    //INITIALIZATION
     //TestInitialize();
     ImGui::SFML::Init(window);
 
     newGraph = Graph(bufferWidth, bufferHeight, originX, originY, pixelEqui);
     GraphManipulation();
 
-    sf::Clock deltaTime;
-
     myASTHelper.SetFont(myFont);
     myASTHelper.SetFontSize(30);
+    RPN::RPNInitialize(myASTHelper);
 
+    //draw loop
+    sf::Clock deltaTime;
     while (window.isOpen())
     {
-        //std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
+        std::cout << "FPS: " << 1.0/deltaTime.getElapsedTime().asSeconds() << '\n';
 
         sf::Event event;
         while (window.pollEvent(event))

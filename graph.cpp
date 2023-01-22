@@ -52,7 +52,7 @@ Graph::Graph(int width, int height,
     this->lineColor = sf::Color::Black;
 }
 
-Graph::Graph() {};
+Graph::Graph() {}
 
 #pragma region lines & axes
 void Graph::CreateRectLine(float startX, float startY, float endX, float endY, float lineThickness, sf::Color col = sf::Color::White) {
@@ -284,6 +284,7 @@ bool Graph::QuarterCheck(float x, float y, int quart) {
     } else if (quart == 3) {
         return (x >= 0) & (y <= 0);
     }
+    return -1;
 }
 #pragma endregion
 
