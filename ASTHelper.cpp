@@ -18,7 +18,7 @@ void ASTHelper::SetFontSize(int fs) {
 
 void ASTHelper::CreateBuffer(int width, int height) {
     this->myTex.create(width, height);
-    this->myTex.setSmooth(false);
+    this->myTex.setSmooth(true);
 }
 
 void ASTHelper::ClearBuffer() {
@@ -28,9 +28,7 @@ void ASTHelper::ClearBuffer() {
 void ASTHelper::DisplayBuffer() {
     this->myTex.display();
 }
-#pragma endregion
 
-#pragma region textManipulation
 void ASTHelper::DrawBufferToWindow(sf::RenderWindow &window) {
     sf::Sprite sp(this->myTex.getTexture());
     window.draw(sp);
@@ -54,8 +52,10 @@ void ASTHelper::RenderToBuffer(std::vector<textInfoTrack> &chars) {
     }
     this->DisplayBuffer();
 }
+#pragma endregion
 
-textInfoString ASTHelper::GetTextFromDefaultString(sf::String s) {
+#pragma region textManipulation
+textInfoString ASTHelper::GetTextFromDefaultString(sf::String s, bool applyAsRect = false) {
     std::vector<textInfoTrack> ret;
 
     sf::Text tmp;
@@ -67,11 +67,38 @@ textInfoString ASTHelper::GetTextFromDefaultString(sf::String s) {
     //VERY IMPORTANT LINE :) Put text origin back to its true bound: https://en.sfml-dev.org/forums/index.php?topic=20284.0
     tmp.setOrigin(sf::Vector2f(tmp.getGlobalBounds().left, tmp.getGlobalBounds().top)); 
 
+    if (!applyAsRect) {
+        
+    }
+    /*//PRECAUTION: USE IN INITIALIZATION FUNCTIONS ONLY. 
+    //CREATING sf::RenderTexture is every frame is stupid, costly, and crashing (literally)
+    else { 
+        int width = tmp.getGlobalBounds().width;
+        int height = tmp.getGlobalBounds().height;
+
+        this->addonTex.create(width, height);
+        this->addonTex.setSmooth(true);
+        this->addonTex.clear(sf::Color(0, 0, 0, 255));
+        this->addonTex.draw(tmp);
+        this->addonTex.display();
+
+        sf::RectangleShape shape(sf::Vector2f(width, height));
+        //shape.setFillColor(sf::Color(0, 0, 0, 255));
+        
+        sf::Texture newTex = this->addonTex.getTexture();
+        this->texArray[s[0]] = newTex;
+
+        shape.setTexture(&texArray[s[0]]);
+
+        //return
+        textInfoTrack tex(shape);
+        ret.push_back(tex);
+    }*/
+
     textInfoTrack tex(tmp);
     ret.push_back(tex);
 
-    textInfoString inf(ret, 10000);
-
+    textInfoString inf(ret, 20000, '?'); //priority will change anyway
     return inf;
 }
 
@@ -84,12 +111,12 @@ textInfoString ASTHelper::GetVerticalSlash(int width, int height) {
     textInfoTrack tex(tmp);
     ret.push_back(tex);
 
-    textInfoString inf(ret, 10000);
+    textInfoString inf(ret, 10000, '?');
 
     return inf;
 }
 
-textInfoString ASTHelper::MergeTwoTextsToRight(textInfoString &main, textInfoString &sub,
+void ASTHelper::MergeTwoTextsToRight(textInfoString &main, textInfoString &sub,
     float scaleMain = 1.0, float scaleSub = 1.0) {
     //scale shit up
     main.scale(scaleMain);
@@ -97,7 +124,7 @@ textInfoString ASTHelper::MergeTwoTextsToRight(textInfoString &main, textInfoStr
 
     //calculate heights & widths
     int mainHeight  = main.getTotalHeight(),    mainWidth   = main.getTotalWidth();
-    int subHeight   = sub.getTotalHeight(),     subWidth    = sub.getTotalWidth();
+    int subHeight   = sub.getTotalHeight()/*,     subWidth    = sub.getTotalWidth()*/;
 
     //start moving shit around
     //move all of sub to right of main
@@ -115,17 +142,17 @@ textInfoString ASTHelper::MergeTwoTextsToRight(textInfoString &main, textInfoStr
 
     //merge 2 file
     main.merge(sub);
-
-    return main;
 }
 
-textInfoString ASTHelper::MergeTwoTextsToDown(textInfoString &main, textInfoString &sub, 
+void ASTHelper::MergeTwoTextsToDown(textInfoString &main, textInfoString &sub, 
     float scaleMain = 1.0, float scaleSub = 1.0) {
     //meddle something with scaling here? no need yet... though
+    main.scale(scaleMain);
+    sub.scale(scaleSub);
 
     //calculate heights & widths
     int mainHeight = main.getTotalHeight(), mainWidth = main.getTotalWidth();
-    int subHeight = sub.getTotalHeight(), subWidth = sub.getTotalWidth();
+    int /*subHeight = sub.getTotalHeight(),*/ subWidth = sub.getTotalWidth();
 
     //start moving shit around
     //move all of sub to bottom of main
@@ -143,19 +170,18 @@ textInfoString ASTHelper::MergeTwoTextsToDown(textInfoString &main, textInfoStri
 
     //merge 2 file
     main.merge(sub);
-
-    return main;
 }
 
-textInfoString ASTHelper::MergeTwoTextsToUpLeft(textInfoString &main, textInfoString &sub, float percentDown,
+//used for exponents
+void ASTHelper::MergeTwoTextsToUpLeft(textInfoString &main, textInfoString &sub, float percentDown,
     float scaleMain = 1.0, float scaleSub = 1.0) {
     //scale shit up
     main.scale(scaleMain);
     sub.scale(scaleSub);
 
     //calculate heights & widths
-    int mainHeight = main.getTotalHeight(), mainWidth = main.getTotalWidth();
-    int subHeight = sub.getTotalHeight(), subWidth = sub.getTotalWidth();
+    int /*mainHeight = main.getTotalHeight(),*/ mainWidth = main.getTotalWidth();
+    int subHeight = sub.getTotalHeight()/*, subWidth = sub.getTotalWidth()*/;
 
     //start moving shit around
     //move all of sub to right of main
@@ -167,8 +193,6 @@ textInfoString ASTHelper::MergeTwoTextsToUpLeft(textInfoString &main, textInfoSt
 
     //merge 2 file
     main.merge(sub);
-
-    return main;
 }
 #pragma endregion
 

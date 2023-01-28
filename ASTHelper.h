@@ -6,27 +6,33 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <memory>
+
+enum specialTex {
+    LeftBrac = '(',
+    RightBrac = ')'
+};
 
 class textSizeHelper {
     public:
-        float size[401];
+        static void GetReasonableSize(sf::Text &tex, float requiredHeight) {
+            float currentHeight = tex.getGlobalBounds().height;
+            int curSize = tex.getCharacterSize();
 
-        textSizeHelper() {
-            
-        }
-
-        textSizeHelper(sf::Text &myText) {
-            int oldSize = myText.getCharacterSize();
-            for (int i = 1; i <= 400; i++) {
-                myText.setCharacterSize(i);
-                size[i] = myText.getGlobalBounds().height;
+            if (currentHeight < requiredHeight) { //increased
+                while(currentHeight < requiredHeight) {
+                    curSize++;
+                    tex.setCharacterSize(curSize);
+                    currentHeight = tex.getGlobalBounds().height;
+                }
+            } else { //decreased
+                while(currentHeight > requiredHeight) {
+                    curSize--;
+                    tex.setCharacterSize(curSize);
+                    currentHeight = tex.getGlobalBounds().height;
+                }
             }
-            myText.setCharacterSize(oldSize);
-        }
-
-        int heightToCharSize(float height) {
-            return std::lower_bound(size+1, size+400, height) - size;
-        }
+        } 
 };
 
 class textInfoTrack {
@@ -77,6 +83,17 @@ class textInfoTrack {
             else            {shape.setPosition(sf::Vector2f(x, y));}
         }
 
+        void SetOrigin(float x, float y) {
+            if (useText)    {text.setOrigin(sf::Vector2f(x, y));}
+            else            {shape.setOrigin(sf::Vector2f(x, y));}
+        }
+
+        void SetHardOrigin() {
+            if (useText)    {SetOrigin(text.getLocalBounds().left, text.getLocalBounds().top); }
+            else            {SetOrigin(shape.getLocalBounds().left, shape.getLocalBounds().top); }
+        }
+
+        //others
         void moveX(float x) {
             if (useText)    {text.setPosition(text.getPosition().x + x, text.getPosition().y);}
             else            {shape.setPosition(shape.getPosition().x + x, shape.getPosition().y);}
@@ -88,15 +105,13 @@ class textInfoTrack {
         }
 
         void ScaleUp(float sc) { 
-            //if (useText)    {text.setCharacterSize(text.getCharacterSize() * sc);}
-
-
-            if (useText)    {
-                text.scale(sf::Vector2f(sc, sc)); 
-                //int x = this->helper.heightToCharSize(getHeight() * sc);
-                //text.setCharacterSize(x);
+            if (useText) {
+                float requiredHeight = getHeight() * sc;
+                textSizeHelper::GetReasonableSize(this->text, requiredHeight); 
             }
-            else            {shape.scale(sf::Vector2f(sc, sc));}
+            else {
+                shape.scale(sf::Vector2f(sc, sc));
+            }
         }
 };
 
@@ -104,14 +119,17 @@ class textInfoString {
     public:
         std::vector<textInfoTrack> tex;
         int prevPriority;
+        char prevOp;
 
-        textInfoString(std::vector<textInfoTrack> text, int pre) {
+        textInfoString(std::vector<textInfoTrack> text, int pre, char prevOp) {
             this->tex = text;
             this->prevPriority = pre;
+            this->prevOp = prevOp;
         }
 
         textInfoString() {
-
+            this->prevPriority = 20000;
+            this->prevOp = '?';
         }
 
         //methods
@@ -132,15 +150,45 @@ class textInfoString {
             return h;
         }
 
+        int getTopX() {
+            int x = 1e9;
+            for (auto &te: tex) {
+                x = std::min((float)x, te.getPositionX());
+            }
+            return x;
+        }
+
+        int getTopY() {
+            int y = 1e9;
+            for (auto &te: tex) {
+                y = std::min((float) y, te.getPositionY());
+            }
+            return y;
+        }
+
         //setters
         void setPriority(int x) {
             this->prevPriority = x;
         }
 
+        void setPrevOp(char c) {
+            this->prevOp = c;
+        }
+
         //others
         void scale(float sc) {
+            int oriX = getTopX(), oriY = getTopY();
             for (auto &t: tex) {
+                //calc new pos
+                sf::Vector2f texOrigin((oriX - t.getPositionX())*(1 - sc), (oriY - t.getPositionY())*(1-sc));                
+
+                //scale
                 t.ScaleUp(sc);
+                t.SetHardOrigin();
+
+                //move
+                t.moveX(texOrigin.x);
+                t.moveY(texOrigin.y);
             }
         }
 
@@ -170,19 +218,20 @@ class ASTHelper {
         sf::Font textFont;
         int fontSize;
         sf::RenderTexture myTex;
+        sf::RenderTexture addonTex;
 
         void SetFont(sf::Font &f);
         void SetFontSize(int s);
 
-        textInfoString GetTextFromDefaultString(sf::String s);
-        textInfoString MergeTwoTextsToRight(textInfoString &first, textInfoString &second, 
-            float scaleMain, float scaleSub);
-        textInfoString MergeTwoTextsToDown(textInfoString &first, textInfoString &second, 
-            float scaleMain, float scaleSub);
-        textInfoString MergeTwoTextsToUpLeft(textInfoString &first, textInfoString &second, float percentUp,
-            float scaleMain, float scaleSub);
-        
+        textInfoString GetTextFromDefaultString(sf::String s, bool applyAsRect);
         textInfoString GetVerticalSlash(int width, int height);
+
+        void MergeTwoTextsToRight(textInfoString &first, textInfoString &second, 
+            float scaleMain, float scaleSub);
+        void MergeTwoTextsToDown(textInfoString &first, textInfoString &second, 
+            float scaleMain, float scaleSub);
+        void MergeTwoTextsToUpLeft(textInfoString &first, textInfoString &second, float percentUp,
+            float scaleMain, float scaleSub);
 
         void CreateBuffer(int width, int height); //destroy and refresh
         void ClearBuffer();
@@ -191,6 +240,7 @@ class ASTHelper {
         void DrawBufferToWindow(sf::RenderWindow &window);
 
     private:
+        sf::Texture texArray[256];
 };
 
 #endif

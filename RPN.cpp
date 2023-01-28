@@ -1,14 +1,5 @@
 #include "RPN.h"
-
-std::string ReplaceString(std::string subject, const std::string& search,
-                          const std::string& replace) {
-    size_t pos = 0;
-    while ((pos = subject.find(search, pos)) != std::string::npos) {
-         subject.replace(pos, search.length(), replace);
-         pos += replace.length();
-    }
-    return subject;
-}
+#include "StringHelper.h"
 
 #pragma region vars
 std::map<char, int> RPN::precedence = {
@@ -88,17 +79,47 @@ void RPN::RPNInitialize(ASTHelper &helper) {
         char c = it->first;
         sf::String s = it->second;
 
-        textInfoString tmp = helper.GetTextFromDefaultString(s);
+        textInfoString tmp = helper.GetTextFromDefaultString(s, false);
         tmp.setPriority(-1);
+        tmp.setPrevOp('?');
 
         opDefault[c] = tmp;
     }
 }
 
+std::string RPN::MultiplicationInfixToRPNAdder(std::string inp) {
+    std::string res = inp;
+
+    int x = 0;
+    while(x < (int) res.size()-1) {
+        char c = res[x];
+        char d = res[x+1];
+        if (StringHelper::isNum(c) && (d == '(' || StringHelper::isAlpha(d))) {
+            res.insert(x+1, "*");
+            //std::cout << c << " " << d << " ;1" << '\n';
+        } else if (c == ')' && (StringHelper::isNum(d) || StringHelper::isAlpha(d) || d == '(')) {
+            res.insert(x+1, "*");
+            //std::cout << c << " " << d << " ;2" << '\n';
+        } else if (c == 'x' && (StringHelper::isNum(d) || d == '(' || StringHelper::isAlpha(d)) ) {
+            res.insert(x+1, "*");
+            //std::cout << c << " " << d << " ;3" << '\n';
+        }
+        x++;
+    }
+    return res;
+}
+
+bool RPN::isTrigFunction(char c) {
+    return ((c == '!') || (c == '@') || (c == '#') || (c == '$'));
+}
+
 std::vector<std::string> RPN::infixToRPN(std::string inp)  {
+    //add multiplcation values
+    inp = MultiplicationInfixToRPNAdder(inp);
+
     //replace uncommon functions
     for (std::map<std::string, char>::iterator it = opConvert.begin(); it != opConvert.end(); it++) {
-        inp = ReplaceString(inp, it->first, std::string(1, it->second));
+        inp = StringHelper::ReplaceString(inp, it->first, std::string(1, it->second));
     }
 
     //conversion
@@ -305,19 +326,101 @@ float RPN::RPNToValue(std::vector<std::string> &rp, float xVal) {
 
 textInfoString RPN::RPNToDisplay(std::vector<std::string> &rpn, ASTHelper &myASTHelper) {
     //evaluate
+    //for (std::string s: rpn) {std::cout << s << " ";} std::cout << '\n';
     std::stack<textInfoString> val;
 
     for (const std::string &x: rpn) {
-        if (x[0] == 'x' || num.find(x[0]) != std::string::npos) { //is a number or x
-            textInfoString text = myASTHelper.GetTextFromDefaultString(x);
-            text.setPriority(999); //highest priority
+        if (num.find(x[0]) != std::string::npos) { //is a number 
+            textInfoString text = myASTHelper.GetTextFromDefaultString(x, false);
+            text.setPriority(9999); //highest priority
+            text.setPrevOp('0');
 
             val.push(text);
         } 
+
+        else if (x[0] == 'x' ) { //is x
+            textInfoString text = myASTHelper.GetTextFromDefaultString(x, false);
+            text.setPriority(10000); //highest priority for x
+            text.setPrevOp('x');
+
+            val.push(text);
+        }
         
         else { //operator
             switch(x[0]) {
-                case '+': case '-': case '*': {
+                case '*': { //brackets both side needed
+                    textInfoString leftVal = val.top(); val.pop();
+                    textInfoString rightVal = val.top(); val.pop();
+                    
+                    textInfoString sign = opDefault[x[0]];
+
+                    bool leftBrac = false, rightBrac = false;
+                    int rightPri = leftVal.prevPriority, leftPri = rightVal.prevPriority;
+                    char rightOp = leftVal.prevOp, leftOp = rightVal.prevOp;
+
+                    if (precedence[x[0]] > leftVal.prevPriority) {
+                        textInfoString rightBracket = opDefault[')'];
+                        textInfoString leftBracket = opDefault['('];
+
+                        float inc = (float) leftVal.getTotalHeight() / rightBracket.getTotalHeight();
+                        //std::cout << leftVal.getTotalHeight() << " " << inc << " " << '\n';
+
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, leftVal, inc, 1.0);
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, rightBracket, 1.0, inc);
+
+                        leftVal = leftBracket;
+                        rightBrac = true;
+                    }
+
+                    if (precedence[x[0]] > rightVal.prevPriority) {
+                        textInfoString rightBracket = opDefault[')'];
+                        textInfoString leftBracket = opDefault['('];
+
+                        float inc = (float) rightVal.getTotalHeight() / rightBracket.getTotalHeight();
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, rightVal, inc, 1.0);
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, rightBracket, 1.0, inc);
+
+                        rightVal = leftBracket;
+                        leftBrac = true;
+                    }
+
+                    if  (
+                        (leftPri == 9999    && (rightPri == 10000   || rightBrac || isTrigFunction(rightOp) )) ||
+                        (leftPri == 10000   && (rightPri == 9999    || rightBrac || isTrigFunction(rightOp) )) ||
+                        (leftBrac           && (rightPri == 9999    || rightBrac || rightPri == 10000 || isTrigFunction(rightOp) )) ||
+                        (leftPri == precedence[x[0]]) || //also a multiplication 
+                        (isTrigFunction(leftOp) && (rightPri == 9999    || rightBrac || rightPri == 10000 || isTrigFunction(rightOp) ))
+                    ) {}
+                    else { //only add * sign if upper requirements aren't sastified
+                        myASTHelper.MergeTwoTextsToRight(rightVal, sign, 1.0, 1.0);     
+                    }
+                    
+                    myASTHelper.MergeTwoTextsToRight(rightVal, leftVal, 1.0, 1.0);
+
+                    rightVal.setPriority(precedence[x[0]]);
+                    rightVal.setPrevOp(x[0]);
+                    val.push(rightVal);
+
+                    break;
+                }
+
+                case '+': { //no brackets needed, it's the lowest priority anyway
+                    textInfoString leftVal = val.top(); val.pop();
+                    textInfoString rightVal = val.top(); val.pop();
+                    
+                    textInfoString sign = opDefault[x[0]];
+
+                    myASTHelper.MergeTwoTextsToRight(rightVal, sign, 1.0, 1.0);
+                    myASTHelper.MergeTwoTextsToRight(rightVal, leftVal, 1.0, 1.0);
+
+                    rightVal.setPriority(precedence[x[0]]);
+                    rightVal.setPrevOp(x[0]);
+                    val.push(rightVal);
+
+                    break;
+                }
+
+                case '-': { //brackets needed on leftVal (right side) only
                     textInfoString leftVal = val.top(); val.pop();
                     textInfoString rightVal = val.top(); val.pop();
                     
@@ -327,29 +430,21 @@ textInfoString RPN::RPNToDisplay(std::vector<std::string> &rpn, ASTHelper &myAST
                         textInfoString rightBracket = opDefault[')'];
                         textInfoString leftBracket = opDefault['('];
 
-                        float inc = leftVal.getTotalHeight() / rightBracket.getTotalHeight();
-                        textInfoString merge = myASTHelper.MergeTwoTextsToRight(leftBracket, leftVal, inc, 1.0);
-                        textInfoString merge2 = myASTHelper.MergeTwoTextsToRight(merge, rightBracket, 1.0, inc);
+                        float inc = (float) leftVal.getTotalHeight() / rightBracket.getTotalHeight();
+                        //std::cout << leftVal.getTotalHeight() << " " << inc << " " << '\n';
 
-                        leftVal = merge2;
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, leftVal, inc, 1.0);
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, rightBracket, 1.0, inc);
+
+                        leftVal = leftBracket;
                     }
 
-                    if (precedence[x[0]] >= rightVal.prevPriority) {
-                        textInfoString rightBracket = opDefault[')'];
-                        textInfoString leftBracket = opDefault['('];
+                    myASTHelper.MergeTwoTextsToRight(rightVal, sign, 1.0, 1.0);
+                    myASTHelper.MergeTwoTextsToRight(rightVal, leftVal, 1.0, 1.0);
 
-                        float inc = rightVal.getTotalHeight() / rightBracket.getTotalHeight();
-                        textInfoString merge = myASTHelper.MergeTwoTextsToRight(leftBracket, rightVal, inc, 1.0);
-                        textInfoString merge2 = myASTHelper.MergeTwoTextsToRight(merge, rightBracket, 1.0, inc);
-
-                        rightVal = merge2;
-                    }
-
-                    textInfoString merge = myASTHelper.MergeTwoTextsToRight(rightVal, sign, 1.0, 1.0);
-                    textInfoString merge2 = myASTHelper.MergeTwoTextsToRight(merge, leftVal, 1.0, 1.0);
-
-                    merge2.setPriority(precedence[x[0]]);
-                    val.push(merge2);
+                    rightVal.setPriority(precedence[x[0]]);
+                    rightVal.setPrevOp(x[0]);
+                    val.push(rightVal);
 
                     break;
                 }
@@ -359,15 +454,16 @@ textInfoString RPN::RPNToDisplay(std::vector<std::string> &rpn, ASTHelper &myAST
                     textInfoString rightVal = val.top(); val.pop();
 
                     int maxWidth = std::max(leftVal.getTotalWidth(), rightVal.getTotalWidth()) + 8 * 2;
-                    int height = 1.5;
+                    int height = 3;
 
                     textInfoString slash    = myASTHelper.GetVerticalSlash(maxWidth, height);
                     
-                    textInfoString merge    = myASTHelper.MergeTwoTextsToDown(rightVal, slash, 1.0, 1.0);
-                    textInfoString merge2   = myASTHelper.MergeTwoTextsToDown(merge, leftVal, 1.0, 1.0);
+                    myASTHelper.MergeTwoTextsToDown(rightVal, slash, 1.0, 1.0);
+                    myASTHelper.MergeTwoTextsToDown(rightVal, leftVal, 1.0, 1.0);
 
-                    merge2.setPriority(precedence[x[0]]);
-                    val.push(merge2);
+                    rightVal.setPriority(precedence[x[0]]);
+                    rightVal.setPrevOp(x[0]);
+                    val.push(rightVal);
 
                     break;
                 }
@@ -381,46 +477,45 @@ textInfoString RPN::RPNToDisplay(std::vector<std::string> &rpn, ASTHelper &myAST
                         textInfoString rightBracket = opDefault[')'];
                         textInfoString leftBracket = opDefault['('];
 
-                        float inc = rightVal.getTotalHeight() / rightBracket.getTotalHeight();
-                        textInfoString merge = myASTHelper.MergeTwoTextsToRight(leftBracket, rightVal, inc, 1.0);
-                        textInfoString merge2 = myASTHelper.MergeTwoTextsToRight(merge, rightBracket, 1.0, inc);
+                        float inc = (float) rightVal.getTotalHeight() / rightBracket.getTotalHeight();
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, rightVal, inc, 1.0);
+                        myASTHelper.MergeTwoTextsToRight(leftBracket, rightBracket, 1.0, inc);
 
-                        rightVal = merge2;
+                        rightVal = leftBracket;
                     }
 
-                    textInfoString merge = myASTHelper.MergeTwoTextsToUpLeft(rightVal, leftVal, 0.9, 1.0, 0.7);
+                    myASTHelper.MergeTwoTextsToUpLeft(rightVal, leftVal, 0.9, 1.0, 0.7);
 
-                    merge.setPriority(precedence[x[0]]);
-                    val.push(merge);
+                    rightVal.setPriority(precedence[x[0]]);
+                    rightVal.setPrevOp(x[0]);
+                    val.push(rightVal);
                     break;
                 }
+                
+                //Trig func
+                case '!' : case '@' : case '#' : case '$' : {
+                    textInfoString leftVal = val.top(); val.pop();
+                    textInfoString sign = opDefault[x[0]];
 
+                    //add bracket
+                    textInfoString rightBracket = opDefault[')'];
+                    textInfoString leftBracket = opDefault['('];
+
+                    float inc = (float) leftVal.getTotalHeight() / rightBracket.getTotalHeight();
+                    
+                    myASTHelper.MergeTwoTextsToRight(sign, leftBracket, 1.0, inc);
+                    myASTHelper.MergeTwoTextsToRight(sign, leftVal, 1.0, 1.0);
+                    myASTHelper.MergeTwoTextsToRight(sign, rightBracket, 1.0, inc);
+                    
+                    leftVal = sign;
+
+                    leftVal.setPriority(precedence[x[0]]);
+                    leftVal.setPrevOp(x[0]);
+                    val.push(leftVal);
+
+                    break;
+                }
                 /*
-                //TRIG FUNCTIONS
-                case '!': {
-                    float x = val.top(); val.pop();
-                    val.push(std::sin(x));
-                    break;
-                }
-
-                case '@': {
-                    float x = val.top(); val.pop();
-                    val.push(std::cos(x));
-                    break;
-                }
-
-                case '#': {
-                    float x = val.top(); val.pop();
-                    val.push(std::tan(x));
-                    break;
-                }
-
-                case '$': {
-                    float x = val.top(); val.pop();
-                    val.push(1/std::tan(x));
-                    break;
-                }
-
                 //abs
                 case '|': {
                     float x = val.top(); val.pop();
@@ -466,9 +561,9 @@ textInfoString RPN::RPNToDisplay(std::vector<std::string> &rpn, ASTHelper &myAST
                     break;
                 }*/
 
-                default: {
+                /*default: {
                     std::cout << "Unknown" << '\n'; return textInfoString(); break;
-                }
+                }*/
             }
         }
     }

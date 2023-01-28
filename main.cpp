@@ -16,14 +16,14 @@ sf::RenderWindow window(sf::VideoMode(1440, 720), "SFML project");
 Graph newGraph;
 ASTHelper myASTHelper;
 
-char expressBuffer[64] = "sin(tan(x))"; 
+char expressBuffer[64] = "x"; 
 
 float graphSpacing = 0.01;
 float pixelEqui = 30;
 float lineSize = 3;
 
 float bufferX = 150;
-float bufferY = 250;
+float bufferY = 150;
 float originX = 0.2;
 float originY = 0.8;
 
@@ -67,9 +67,12 @@ void TestInDrawLoop() {
     myASTHelper.DrawBufferToWindow(window);*/
 
     //test2
-    //std::vector<std::string> rp = RPN::infixToRPN("(x-2*5)/((x+3)/(x-3+9/x/x+5-7/3-8/9/6/(x+2)))");
-    std::vector<std::string> rp = RPN::infixToRPN("((x+2)/5)^(3*x-5)^(2/5/x)-1");    
-    //std::vector<std::string> rp = RPN::infixToRPN("(2/5/x)^(2/x/5)");
+    //std::vector<std::string> rp = RPN::infixToRPN("2*(x-5)");
+    //std::vector<std::string> rp = RPN::infixToRPN("(x-2*5)^(x-3)/((x+3)/(x-3+9/x+5/x/x-7/3/x/x-8/9/6/(x+2)))");
+    //std::vector<std::string> rp = RPN::infixToRPN("((x+2^2/7x)/5)^(3*x-5)^(2/5/2x^2+2x)");    
+    //std::vector<std::string> rp = RPN::infixToRPN("(2/5/x^3+2x^2+x+1)^(2/x-3x+2x^2/5)^(2/5(x-47x^2)x^3/x)");
+    //std::vector<std::string> rp = RPN::infixToRPN("2x2(x-1)2(x-1)(x+1)x(x+1/2)/2");
+    std::vector<std::string> rp = RPN::infixToRPN("xsin(x/2cos(tan(x)))cos(x+tan(3x^2x))tan(2x/(x^2+2x+1))");
 
     textInfoString fin = RPN::RPNToDisplay(rp, myASTHelper);
 
@@ -88,7 +91,7 @@ void DrawGraph() {
 }
 
 void GraphManipulation() {
-    if (!myFont.loadFromFile("./res/font/Asana-Math.ttf")) {
+    if (!myFont.loadFromFile("./res/font/latinmodern-math.otf")) {
         std::cout << "Font load failed";
     }
     //setters

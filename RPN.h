@@ -9,6 +9,7 @@
 #include <cmath>
 
 #include "ASTHelper.h"
+#include "StringHelper.h"
 
 class RPN {
     public:
@@ -18,6 +19,8 @@ class RPN {
         static float RPNToValue(std::vector<std::string> &rpn, float xVal);
         static textInfoString RPNToDisplay(std::vector<std::string> &rpn, ASTHelper &myASTHelper);
 
+        static bool isTrigFunction(char c);
+
     private:
         static std::map<char, int> precedence;
         static std::map<std::string, char> opConvert;
@@ -26,6 +29,8 @@ class RPN {
 
         static std::map<char, sf::String> opDisplay;
         static std::map<char, textInfoString> opDefault;
+
+        static std::string MultiplicationInfixToRPNAdder(std::string inp);
 };
 
 #endif
